@@ -1,12 +1,12 @@
 // App.js
 import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Home, Film, Tv, User, Moon, Sun, Settings } from "lucide-react";
+import { Search, Home, Film, Tv, User, Moon, Sun, Settings, Menu } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
-import { FilmPage } from "./components/FilmPage";
+import { FilmPage } from "./pages/FilmPage";
 import { SettingsPage } from "./components/SettingsPage";
 import OutsideClickWrapper from "./components/OutsideClickWrapper";
 import UserPage from "./pages/UserPage";
@@ -14,6 +14,7 @@ import UserPage from "./pages/UserPage";
 function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [showUsers, setShowUsers] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const userMenuRef = useRef();
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,19 +44,55 @@ function App() {
 
   return (
     <div className={`${darkMode ? "bg-black text-white" : "bg-white text-black"} min-h-screen flex flex-col`}>
-      <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-10">
+      <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 p-4 flex items-center justify-between flex-wrap gap-4 sm:flex-nowrap">
+        {/* Mobile header row */}
+        <div className="w-full flex justify-between items-center sm:hidden">
+          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="text-white">
+            <Menu size={24} />
+          </button>
           <Link to="/" className="text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
             Cinem<span className="text-cyan-400">AI</span>
           </Link>
-          <nav className="flex gap-6 text-white">
+          <div className="flex gap-4 items-center" ref={userMenuRef}>
+            <button onClick={toggleDarkMode} className="hover:scale-110 transition-transform text-white">
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button onClick={() => setShowUsers(!showUsers)} className="hover:scale-110 transition-transform text-white">
+              <User size={24} />
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop logo & nav */}
+        <div className="hidden sm:flex items-center gap-4 w-full sm:w-auto justify-between">
+          <Link to="/" className="text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
+            Cinem<span className="text-cyan-400">AI</span>
+          </Link>
+        </div>
+
+        <div className="w-full sm:w-auto">
+          <motion.nav
+            initial={false}
+            animate={showMobileMenu ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="sm:hidden overflow-hidden flex flex-col gap-4 text-white"
+          >
+            <Link to="/" className="flex items-center gap-2 hover:text-cyan-400"><Home size={20} /> Home</Link>
+            <Link to="/movies" className="flex items-center gap-2 hover:text-cyan-400"><Film size={20} /> Movies</Link>
+            <Link to="/tv-shows" className="flex items-center gap-2 hover:text-cyan-400"><Tv size={20} /> TV Shows</Link>
+            <Link to="/search" className="flex items-center gap-2 hover:text-cyan-400"><Search size={20} /> Search</Link>
+          </motion.nav>
+
+          <nav className="hidden sm:flex gap-6 text-white">
             <Link to="/" className="flex items-center gap-2 hover:text-cyan-400"><Home size={20} /> Home</Link>
             <Link to="/movies" className="flex items-center gap-2 hover:text-cyan-400"><Film size={20} /> Movies</Link>
             <Link to="/tv-shows" className="flex items-center gap-2 hover:text-cyan-400"><Tv size={20} /> TV Shows</Link>
             <Link to="/search" className="flex items-center gap-2 hover:text-cyan-400"><Search size={20} /> Search</Link>
           </nav>
         </div>
-        <div className="flex items-center gap-4 relative" ref={userMenuRef} data-user-menu>
+
+        {/* User dropdown remains shared */}
+        <div className="hidden sm:flex items-center gap-4 relative" ref={userMenuRef} data-user-menu>
           <div
             className={`absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4 transform transition-all duration-300 origin-top ${
               showUsers ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0 pointer-events-none"
