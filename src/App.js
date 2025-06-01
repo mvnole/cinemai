@@ -53,13 +53,39 @@ function App() {
           <Link to="/" className="text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
             Cinem<span className="text-cyan-400">AI</span>
           </Link>
-          <div className="flex gap-4 items-center" ref={userMenuRef}>
+          <div className="flex gap-4 items-center relative" ref={userMenuRef}>
             <button onClick={toggleDarkMode} className="hover:scale-110 transition-transform text-white">
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             <button onClick={() => setShowUsers(!showUsers)} className="hover:scale-110 transition-transform text-white">
               <User size={24} />
             </button>
+            {showUsers && (
+              <div className="absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4 transform transition-all duration-300 origin-top">
+                <h3 className="font-semibold mb-2">Users</h3>
+                <ul className="space-y-2">
+                  <li><Link to="/user/1" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 1</Link></li>
+                  <li><Link to="/user/2" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 2</Link></li>
+                  <li><Link to="/user/3" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 3</Link></li>
+                </ul>
+                <hr className="my-2 border-zinc-600" />
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="flex items-center gap-2 text-sm text-white hover:text-blue-400 px-2 py-1"
+                >
+                  <Settings size={16} /> Setări
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUsers(false);
+                    navigate("/login");
+                  }}
+                  className="text-sm hover:text-red-400"
+                >
+                  Delogare
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -91,7 +117,7 @@ function App() {
           </nav>
         </div>
 
-        {/* User dropdown remains shared */}
+        {/* Desktop user dropdown */}
         <div className="hidden sm:flex items-center gap-4 relative" ref={userMenuRef} data-user-menu>
           <div
             className={`absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4 transform transition-all duration-300 origin-top ${
