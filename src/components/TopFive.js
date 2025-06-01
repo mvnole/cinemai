@@ -33,7 +33,7 @@ function TopFive({ films }) {
             index + 1
           ),
           React.createElement("img", {
-            src: film.poster,
+            src: film.image,
             alt: film.title,
             className:
               "w-full h-72 object-cover rounded-xl shadow-xl border-2 border-gray-800 group-hover:border-white relative z-10",

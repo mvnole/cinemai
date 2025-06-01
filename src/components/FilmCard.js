@@ -33,7 +33,7 @@ function FilmCard({ film }) {
         />
       ) : (
         <img
-          src={film.poster}
+          src={film.image}
           alt={film.title}
           className="w-full h-full object-cover transition-all duration-300"
         />
