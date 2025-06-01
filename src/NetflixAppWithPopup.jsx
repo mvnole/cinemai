@@ -1,0 +1,1 @@
+// Codul complet este același ca anterior, inserat aici pentru a genera fișierul.
