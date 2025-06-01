@@ -2,3 +2,5 @@ node_modules
 .cache
 build
 .DS_Store
+node_modules 
+echo node_modules
