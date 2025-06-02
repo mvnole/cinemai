@@ -3,11 +3,13 @@ import FilmCard from "./FilmCard";
 
 function Section({ title, items }) {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <div className="flex flex-wrap gap-6">
+    <div className="px-4 space-y-4">
+      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <div className="flex gap-12 overflow-x-auto sm:overflow-visible sm:flex-wrap pb-2">
         {items.map((film) => (
-          <FilmCard key={film.id} film={film} />
+          <div key={film.id} className="shrink-0 w-48 group">
+            <FilmCard film={film} />
+          </div>
         ))}
       </div>
     </div>

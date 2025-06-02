@@ -22,7 +22,7 @@ const HeroBanner = ({ videoId }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden pb-24">
+    <div className="hidden sm:block relative w-screen h-screen overflow-hidden pb-24">
       <div className="absolute inset-0 z-0">
         <YouTube
           videoId={videoId}

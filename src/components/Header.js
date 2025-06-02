@@ -1,7 +1,6 @@
-// Header.js
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Home, Film, Tv, User, Moon, Sun, Settings, LogOut } from "lucide-react";
+import { Search, Home, Film, Tv, User, Moon, Sun, LogOut } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
 function Header({ darkMode, toggleDarkMode, showUsers, setShowUsers, userMenuRef }) {
@@ -21,57 +20,70 @@ function Header({ darkMode, toggleDarkMode, showUsers, setShowUsers, userMenuRef
   };
 
   return (
-    <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 p-4 flex items-center justify-between">
-      <div className="flex items-center gap-10">
-        <Link to="/" className="text-2xl font-bold flex items-center transition-opacity hover:opacity-80">
+    <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between">
+      <div className="flex items-center gap-6 sm:gap-10">
+        <Link to="/" className="text-2xl sm:text-4xl font-bold flex items-center transition-opacity hover:opacity-80">
           <span className="text-white">Cinem</span>
           <span className="text-cyan-400">AI</span>
         </Link>
-        <nav className="flex gap-6 text-white">
-          <Link to="/" className="flex items-center gap-2 hover:text-cyan-400">
-            <Home size={20} /> Home
+
+        <nav className="hidden md:flex items-center gap-4 sm:gap-6 text-white text-sm">
+          <Link to="/" className="flex items-center gap-1 hover:text-cyan-400">
+            <Home size={16} /> Home
           </Link>
-          <Link to="/movies" className="flex items-center gap-2 hover:text-cyan-400">
-            <Film size={20} /> Movies
+          <Link to="/search" className="flex items-center gap-1 hover:text-cyan-400">
+            <Search size={16} /> Search
           </Link>
-          <Link to="/tv-shows" className="flex items-center gap-2 hover:text-cyan-400">
-            <Tv size={20} /> TV Shows
+          <Link to="/films" className="flex items-center gap-1 hover:text-cyan-400">
+            <Film size={16} /> Films
           </Link>
-          <Link to="/search" className="flex items-center gap-2 hover:text-cyan-400">
-            <Search size={20} /> Search
+          <Link to="/series" className="flex items-center gap-1 hover:text-cyan-400">
+            <Tv size={16} /> Series
           </Link>
         </nav>
       </div>
-      <div className="flex items-center gap-4 relative" ref={userMenuRef}>
-        <button onClick={toggleDarkMode} className="hover:scale-110 transition-transform text-white">
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+
+      <div className="flex items-center gap-3 sm:gap-4 text-white">
+        <button onClick={toggleDarkMode} className="hover:text-cyan-400">
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <button onClick={() => setShowUsers(!showUsers)} className="hover:scale-110 transition-transform text-white">
-          <User size={24} />
-        </button>
-        <div className={`absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4 ${showUsers ? "block" : "hidden"}`}>
-          <h3 className="font-semibold mb-2">Users</h3>
-          <ul className="space-y-2">
-            {['User 1', 'User 2', 'User 3'].map((name) => (
-              <li
-                key={name}
-                onClick={() => handleSwitchUser(name)}
-                className="cursor-pointer hover:text-cyan-400"
-              >
-                {name}
-              </li>
-            ))}
-          </ul>
-          <hr className="my-2 border-zinc-600" />
-          <Link to="/settings" className="flex items-center gap-2 text-sm hover:text-blue-400 px-2 py-1 cursor-pointer" onClick={() => setShowUsers(false)}>
-            <Settings size={16} /> Setări
-          </Link>
+
+        <div className="relative">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm hover:text-red-400 px-2 py-1 cursor-pointer w-full mt-2"
+            onClick={() => setShowUsers(!showUsers)}
+            className="flex items-center gap-2 hover:text-cyan-400 text-sm sm:text-base"
           >
-            <LogOut size={16} /> Delogare
+            <User size={18} /> {user?.name || "Guest"}
           </button>
+
+          {showUsers && (
+            <div
+              ref={userMenuRef}
+              className="absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded shadow-lg z-10"
+            >
+              <div className="px-4 py-2 text-sm text-zinc-300">Switch User</div>
+              <ul className="divide-y divide-zinc-700">
+                {["Alex", "Mira", "Leo"].map((name) => (
+                  <li key={name}>
+                    <button
+                      onClick={() => handleSwitchUser(name)}
+                      className="w-full px-4 py-2 text-left hover:bg-zinc-700 text-white"
+                    >
+                      {name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="px-4 py-2">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300"
+                >
+                  <LogOut size={16} /> Log Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

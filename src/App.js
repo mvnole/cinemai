@@ -21,7 +21,11 @@ function App() {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target) &&
+        !event.target.closest("[data-user-toggle-button]")
+      ) {
         setShowUsers(false);
       }
     }
@@ -44,54 +48,68 @@ function App() {
 
   return (
     <div className={`${darkMode ? "bg-black text-white" : "bg-white text-black"} min-h-screen flex flex-col`}>
-      <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 p-4 flex items-center justify-between flex-wrap gap-4 sm:flex-nowrap">
+      <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 px-4 py-1 sm:px-4 sm:py-4 flex items-center justify-between flex-wrap gap-4 sm:flex-nowrap">
         {/* Mobile header row */}
-        <div className="w-full flex justify-between items-center sm:hidden">
-          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="text-white">
+        <div className="w-full flex justify-between items-center sm:hidden pt-2 pb-2">
+          <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="text-white p-1">
             <Menu size={24} />
           </button>
-          <Link to="/" className="text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
+          <Link to="/" className="text-3xl font-bold text-white hover:text-cyan-400 transition-colors leading-none">
             Cinem<span className="text-cyan-400">AI</span>
           </Link>
           <div className="flex gap-4 items-center relative" ref={userMenuRef}>
-            <button onClick={toggleDarkMode} className="hover:scale-110 transition-transform text-white">
+            <button onClick={toggleDarkMode} className="hover:scale-110 transition-transform text-white p-1">
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button onClick={() => setShowUsers(!showUsers)} className="hover:scale-110 transition-transform text-white">
+            <button
+              data-user-toggle-button
+              onClick={() => setShowUsers(!showUsers)}
+              className="hover:scale-110 transition-transform text-white p-1"
+            >
               <User size={24} />
             </button>
-            {showUsers && (
-              <div className="absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4 transform transition-all duration-300 origin-top">
-                <h3 className="font-semibold mb-2">Users</h3>
-                <ul className="space-y-2">
-                  <li><Link to="/user/1" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 1</Link></li>
-                  <li><Link to="/user/2" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 2</Link></li>
-                  <li><Link to="/user/3" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 3</Link></li>
-                </ul>
-                <hr className="my-2 border-zinc-600" />
-                <button
-                  onClick={() => navigate("/settings")}
-                  className="flex items-center gap-2 text-sm text-white hover:text-blue-400 px-2 py-1"
+            <AnimatePresence>
+              {showUsers && (
+                <motion.div
+                  ref={userMenuRef}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  exit={{ opacity: 0, scaleY: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ originY: 0 }}
+                  className="absolute right-0 top-full mt-2 z-50 bg-zinc-800 text-white rounded shadow-lg w-48 p-4"
                 >
-                  <Settings size={16} /> Setări
-                </button>
-                <button
-                  onClick={() => {
-                    setShowUsers(false);
-                    navigate("/login");
-                  }}
-                  className="text-sm hover:text-red-400"
-                >
-                  Delogare
-                </button>
-              </div>
-            )}
+                  <h3 className="font-semibold mb-2">Users</h3>
+                  <ul className="space-y-2">
+                    <li><Link to="/user/1" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 1</Link></li>
+                    <li><Link to="/user/2" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 2</Link></li>
+                    <li><Link to="/user/3" onClick={() => setShowUsers(false)} className="hover:text-cyan-400 block">User 3</Link></li>
+                  </ul>
+                  <hr className="my-2 border-zinc-600" />
+                  <button
+                    onClick={() => navigate("/settings")}
+                    className="flex items-center gap-2 text-sm text-white hover:text-blue-400 px-2 py-1"
+                  >
+                    <Settings size={16} /> Setări
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUsers(false);
+                      navigate("/login");
+                    }}
+                    className="text-sm hover:text-red-400"
+                  >
+                    Delogare
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
         {/* Desktop logo & nav */}
         <div className="hidden sm:flex items-center gap-4 w-full sm:w-auto justify-between">
-          <Link to="/" className="text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
+          <Link to="/" className="text-xl sm:text-2xl font-bold text-white hover:text-cyan-400 transition-colors">
             Cinem<span className="text-cyan-400">AI</span>
           </Link>
         </div>
@@ -179,11 +197,16 @@ function App() {
               <Route path="/movies" element={<h2 className="text-xl">Movies Page (în lucru)</h2>} />
               <Route path="/tv-shows" element={<h2 className="text-xl">TV Shows Page (în lucru)</h2>} />
               <Route path="/search" element={<SearchPage />} />
-              <Route path="/settings" element={<OutsideClickWrapper redirectTo="/">
-                <div className="settings-wrapper">
-                  <SettingsPage />
-                </div>
-              </OutsideClickWrapper>} />
+              <Route
+                path="/settings"
+                element={
+                  <OutsideClickWrapper redirectTo="/">
+                    <div className="settings-wrapper">
+                      <SettingsPage />
+                    </div>
+                  </OutsideClickWrapper>
+                }
+              />
               <Route path="/user/:id" element={<UserPage />} />
             </Routes>
           </motion.div>
