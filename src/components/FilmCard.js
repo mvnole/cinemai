@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Heart } from "lucide-react";
 
 function FilmCard({ film }) {
+  const location = useLocation(); // pentru backgroundLocation
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -27,6 +28,7 @@ function FilmCard({ film }) {
       {/* Card mic */}
       <Link
         to={`/film/${film.id}`}
+        state={{ modal: true, backgroundLocation: location }}
         className={`block w-full h-full rounded overflow-hidden shadow-lg transition-transform duration-300 ${
           isHovered ? "scale-110 z-20 shadow-2xl" : "z-0"
         }`}
@@ -51,6 +53,7 @@ function FilmCard({ film }) {
           >
             <Link
               to={`/film/${film.id}`}
+              state={{ modal: true, backgroundLocation: location }}
               className="block w-full h-48 overflow-hidden rounded-lg mb-4"
             >
               {film.previewUrl ? (

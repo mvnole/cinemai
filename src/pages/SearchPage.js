@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import FilmCard from "../components/FilmCard";
 import films from "../data/films";
 
@@ -41,6 +41,7 @@ function SearchPage() {
   const [genreFilter, setGenreFilter] = useState("");
   const [ratingFilter, setRatingFilter] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const filteredFilms = films.filter((film) => {
     const matchesQuery = film.title.toLowerCase().includes(query.toLowerCase());
@@ -50,11 +51,17 @@ function SearchPage() {
   });
 
   const handleFilmClick = (film) => {
-    navigate(`/film/${film.id}`, { state: { fromSearch: true } });
+    navigate(`/film/${film.id}`, {
+      state: {
+        modal: true,
+        fromSearch: true,
+        backgroundLocation: location,
+      },
+    });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div className="flex flex-wrap gap-4 items-start">
         <input
           type="text"
@@ -91,16 +98,18 @@ function SearchPage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        {filteredFilms.map((film) => (
-          <div
-            key={film.id}
-            onClick={() => handleFilmClick(film)}
-            className="cursor-pointer transform transition duration-300 hover:scale-105 hover:z-10"
-          >
-            <FilmCard film={{ ...film, showTitleOverlay: false }} />
-          </div>
-        ))}
+      <div className="space-y-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 gap-y-6 mt-24 sm:mt-48">
+          {filteredFilms.map((film) => (
+            <div
+              key={film.id}
+              onClick={() => handleFilmClick(film)}
+              className="relative w-full h-full cursor-pointer transform transition duration-300 hover:scale-105 hover:z-50 origin-center z-0"
+            >
+              <FilmCard film={{ ...film, showTitleOverlay: false }} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
