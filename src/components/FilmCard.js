@@ -1,16 +1,17 @@
 import React, { useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Heart } from "lucide-react";
 
-function FilmCard({ film }) {
-  const location = useLocation(); // pentru backgroundLocation
+function FilmCard({ film, location }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div
-      className="relative w-56 shrink-0"
+    <Link
+      to={`/film/${film.id}`}
+      state={{ modal: true, backgroundLocation: location }}
+      className="relative w-56 shrink-0 block cursor-pointer"
       onMouseEnter={() => {
         setIsHovered(true);
         if (videoRef.current) {
@@ -25,22 +26,14 @@ function FilmCard({ film }) {
         }
       }}
     >
-      {/* Card mic */}
-      <Link
-        to={`/film/${film.id}`}
-        state={{ modal: true, backgroundLocation: location }}
-        className={`block w-full h-full rounded overflow-hidden shadow-lg transition-transform duration-300 ${
-          isHovered ? "scale-110 z-20 shadow-2xl" : "z-0"
+      <img
+        src={film.image}
+        alt={film.title}
+        className={`w-full h-full object-cover rounded transition-transform duration-300 ${
+          isHovered ? "scale-110 z-20 shadow-2xl" : "z-20"
         }`}
-      >
-        <img
-          src={film.image}
-          alt={film.title}
-          className="w-full h-full object-cover rounded"
-        />
-      </Link>
+      />
 
-      {/* Card mare extins la hover */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -51,11 +44,7 @@ function FilmCard({ film }) {
             style={{ transformOrigin: "bottom center" }}
             className="absolute top-[-220px] left-[-60px] w-[320px] z-30 rounded-lg bg-zinc-900 shadow-2xl p-4 text-white"
           >
-            <Link
-              to={`/film/${film.id}`}
-              state={{ modal: true, backgroundLocation: location }}
-              className="block w-full h-48 overflow-hidden rounded-lg mb-4"
-            >
+            <div className="block w-full h-48 overflow-hidden rounded-lg mb-4">
               {film.previewUrl ? (
                 <video
                   ref={videoRef}
@@ -72,7 +61,7 @@ function FilmCard({ film }) {
                   className="w-full h-full object-cover rounded-lg"
                 />
               )}
-            </Link>
+            </div>
             <h3 className="font-bold text-xl mb-2">{film.title}</h3>
             <p className="text-sm text-gray-300 mb-4 line-clamp-4">
               {film.description}
@@ -90,7 +79,7 @@ function FilmCard({ film }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Link>
   );
 }
 

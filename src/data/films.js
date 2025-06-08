@@ -7,7 +7,9 @@ const films = [
     description: "Într-un viitor distopic, visele devin moneda universală și doar cei curajoși mai pot visa liber.",
     duration: "2h 04min",
     rating: "⭐ 4.3 / 5",
-    cast: ["Elena Pavel", "Victor Dima", "Radu Albu"]
+    cast: ["Elena Pavel", "Victor Dima", "Radu Albu"],
+    releaseDate: "2024-02-10",
+    likes: 2300
   },
   {
     id: "eternal-dawn",
@@ -17,7 +19,9 @@ const films = [
     description: "Un soldat renegat încearcă să prevină repetarea unui ciclu infinit de războaie.",
     duration: "1h 49min",
     rating: "⭐ 4.6 / 5",
-    cast: ["Ana Petrescu", "Cristian Nistor", "Ioan Vasile"]
+    cast: ["Ana Petrescu", "Cristian Nistor", "Ioan Vasile"],
+    releaseDate: "2023-12-01",
+    likes: 3850
   },
   {
     id: "automata",
@@ -27,7 +31,9 @@ const films = [
     description: "Un programator se confruntă cu un AI care începe să-și dezvolte propriile conștiințe.",
     duration: "1h 58min",
     rating: "⭐ 4.4 / 5",
-    cast: ["Marius Ionescu", "Diana Mureșan", "Tudor Ilie"]
+    cast: ["Marius Ionescu", "Diana Mureșan", "Tudor Ilie"],
+    releaseDate: "2024-04-22",
+    likes: 3120
   },
   {
     id: "ai-hunter",
@@ -38,7 +44,9 @@ const films = [
     description: "Un detectiv într-o lume controlată de inteligență artificială descoperă un adevăr terifiant.",
     duration: "1h 52min",
     rating: "⭐ 4.7 / 5",
-    cast: ["Andrei Popescu", "Ioana Ionescu", "Mihai Georgescu"]
+    cast: ["Andrei Popescu", "Ioana Ionescu", "Mihai Georgescu"],
+    releaseDate: "2023-11-05",
+    likes: 4280
   },
   {
     id: "neon-storm",
@@ -48,7 +56,9 @@ const films = [
     description: "Un hacker rebel dezlănțuie o furtună de date care zguduie lumea virtuală.",
     duration: "2h 12min",
     rating: "⭐ 4.5 / 5",
-    cast: ["Sorina Luca", "Alexandru Pavel", "Ileana Rusu"]
+    cast: ["Sorina Luca", "Alexandru Pavel", "Ileana Rusu"],
+    releaseDate: "2024-01-15",
+    likes: 2900
   },
   {
     id: "future-edge",
@@ -58,7 +68,9 @@ const films = [
     description: "O echipă de exploratori traversează marginea realității în căutarea unei noi dimensiuni.",
     duration: "2h 00min",
     rating: "⭐ 4.2 / 5",
-    cast: ["Laura Chiriac", "Paul Enache", "Dorin Popa"]
+    cast: ["Laura Chiriac", "Paul Enache", "Dorin Popa"],
+    releaseDate: "2023-09-21",
+    likes: 1740
   },
   {
     id: "dark-protocol",
@@ -68,7 +80,9 @@ const films = [
     description: "Un virus digital pune în pericol existența umană. Doar un fost spion are cheia salvării.",
     duration: "1h 46min",
     rating: "⭐ 4.6 / 5",
-    cast: ["Carmen Udrea", "Răzvan Costache", "George Mihalache"]
+    cast: ["Carmen Udrea", "Răzvan Costache", "George Mihalache"],
+    releaseDate: "2024-03-12",
+    likes: 3590
   },
   {
     id: "digital-eden",
@@ -78,7 +92,9 @@ const films = [
     description: "O lume perfectă creată de AI devine o închisoare subtilă pentru locuitorii ei.",
     duration: "2h 08min",
     rating: "⭐ 4.8 / 5",
-    cast: ["Ana Dumitrescu", "Teodor Marinescu", "Lavinia Goga"]
+    cast: ["Ana Dumitrescu", "Teodor Marinescu", "Lavinia Goga"],
+    releaseDate: "2024-05-10",
+    likes: 4700
   },
   {
     id: "quantum-drift",
@@ -88,7 +104,9 @@ const films = [
     description: "Un cercetător călătorește între dimensiuni pentru a-și salva familia.",
     duration: "1h 55min",
     rating: "⭐ 4.4 / 5",
-    cast: ["Gabriel Rusu", "Delia Cristea", "Octavian Sandu"]
+    cast: ["Gabriel Rusu", "Delia Cristea", "Octavian Sandu"],
+    releaseDate: "2023-10-05",
+    likes: 2400
   },
   {
     id: "zero-hour",
@@ -98,7 +116,9 @@ const films = [
     description: "O cursă contra cronometru pentru a opri un atac cibernetic mondial.",
     duration: "1h 45min",
     rating: "⭐ 4.3 / 5",
-    cast: ["Silvia Manole", "Bogdan Petcu", "Elena Andrei"]
+    cast: ["Silvia Manole", "Bogdan Petcu", "Elena Andrei"],
+    releaseDate: "2023-08-18",
+    likes: 1980
   },
   {
     id: "spectrum",
@@ -108,7 +128,9 @@ const films = [
     description: "O tânără încearcă să-și regăsească identitatea într-o societate ce clasifică oamenii pe baza datelor lor.",
     duration: "1h 59min",
     rating: "⭐ 4.1 / 5",
-    cast: ["Alina Cojocaru", "Sorin Damian", "Cristina Fătu"]
+    cast: ["Alina Cojocaru", "Sorin Damian", "Cristina Fătu"],
+    releaseDate: "2023-07-25",
+    likes: 1620
   },
   {
     id: "cyber-dream",
@@ -118,7 +140,9 @@ const films = [
     description: "Visurile oamenilor sunt transmise live. Un cuplu încearcă să scape din această realitate falsă.",
     duration: "2h 03min",
     rating: "⭐ 4.7 / 5",
-    cast: ["Mihnea Nica", "Iulia Cernat", "Adrian Tănase"]
+    cast: ["Mihnea Nica", "Iulia Cernat", "Adrian Tănase"],
+    releaseDate: "2024-06-01",
+    likes: 4550
   },
   {
     id: "silent-circuit",
@@ -128,7 +152,9 @@ const films = [
     description: "Un inginer descoperă că tăcerea poate dezactiva controlul global al AI-ului.",
     duration: "1h 50min",
     rating: "⭐ 4.2 / 5",
-    cast: ["Dana Stănescu", "Valentin Pătrașcu", "Claudia Rusu"]
+    cast: ["Dana Stănescu", "Valentin Pătrașcu", "Claudia Rusu"],
+    releaseDate: "2023-11-20",
+    likes: 2210
   },
   {
     id: "parallel",
@@ -138,7 +164,9 @@ const films = [
     description: "Doi frați descoperă o poartă către o lume alternativă unde rolurile lor sunt inversate.",
     duration: "2h 10min",
     rating: "⭐ 4.6 / 5",
-    cast: ["Vlad Mihai", "Oana Dobre", "Andrei Stoica"]
+    cast: ["Vlad Mihai", "Oana Dobre", "Andrei Stoica"],
+    releaseDate: "2024-02-25",
+    likes: 3870
   },
   {
     id: "sky-hacker",
@@ -148,7 +176,9 @@ const films = [
     description: "Un pilot de drone descoperă o conspirație mondială orchestrată din cer.",
     duration: "1h 47min",
     rating: "⭐ 4.5 / 5",
-    cast: ["Florin Barbu", "Diana Petre", "Cristian Moise"]
+    cast: ["Florin Barbu", "Diana Petre", "Cristian Moise"],
+    releaseDate: "2023-12-15",
+    likes: 3320
   }
 ];
 
