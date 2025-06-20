@@ -1,31 +1,28 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import films from "../data/films";
+import { Link, useLocation } from "react-router-dom";
 import { Play, Heart, X, Plus } from "lucide-react";
 import { Player, BigPlayButton } from "video-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "video-react/dist/video-react.css";
+import films from "../data/films";
 
-export function FilmPageModal() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const film = films.find((f) => f.id === id);
+export const FilmPageModal = ({ film, onClose }) => {
   const modalRef = useRef();
+  const location = useLocation();
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         setIsClosing(true);
-        setTimeout(() => navigate(location.state?.backgroundLocation || "/"), 300);
+        setTimeout(() => onClose(), 300);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [navigate, location]);
+  }, [onClose]);
 
   if (!film) return null;
 
@@ -52,14 +49,13 @@ export function FilmPageModal() {
             <button
               onClick={() => {
                 setIsClosing(true);
-                setTimeout(() => navigate(location.state?.backgroundLocation || "/"), 300);
+                setTimeout(() => onClose(), 300);
               }}
               className="absolute top-4 right-4 text-gray-300 hover:text-white"
             >
               <X size={28} />
             </button>
 
-            {/* PLAYER */}
             <div className="w-full aspect-video rounded-t-xl overflow-hidden border-b border-zinc-800">
               {film.previewUrl ? (
                 <Player
@@ -80,7 +76,6 @@ export function FilmPageModal() {
               )}
             </div>
 
-            {/* DETALII */}
             <div className="p-6">
               <h1 className="text-3xl font-bold mb-3">{film.title}</h1>
               <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-2">
@@ -101,11 +96,15 @@ export function FilmPageModal() {
                 <span className="font-semibold">Distribuție:</span> {film.cast?.join(", ") || "Actor 1, Actor 2, Actor 3"}
               </div>
 
-              {/* RECOMANDĂRI */}
               <h2 className="text-xl font-semibold mb-3">Recomandări similare</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {recommended.map((f) => (
-                  <Link to={`/film/${f.id}`} key={f.id} state={{ modal: true, backgroundLocation: location }} className="group bg-zinc-800 rounded-lg p-2 hover:bg-zinc-700 transition">
+                  <Link
+                    to={`/film/${f.id}`}
+                    key={f.id}
+                    state={{ modal: true, backgroundLocation: location }}
+                    className="group bg-zinc-800 rounded-lg p-2 hover:bg-zinc-700 transition"
+                  >
                     <div className="relative rounded-md overflow-hidden aspect-video mb-2">
                       <img src={f.image} alt={f.title} className="w-full h-full object-cover" />
                       <div className="absolute top-1 right-1 bg-black/80 text-white text-xs px-2 py-0.5 rounded">
@@ -135,4 +134,4 @@ export function FilmPageModal() {
       )}
     </AnimatePresence>
   );
-}
+};
