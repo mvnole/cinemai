@@ -115,15 +115,6 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
                   <button
                     onClick={() => {
                       setShowUsers(false);
-                      navigate(`/user/${user?.name?.toLowerCase()}`);
-                    }}
-                    className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 mb-2"
-                  >
-                    <User size={16} /> My Account
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowUsers(false);
                       navigate("/settings");
                     }}
                     className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-2"
@@ -178,9 +169,6 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
               </Link>
               <Link to="/search" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-400" onClick={() => setShowMobileMenu(false)}>
                 <Search size={20} /> Search
-              </Link>
-              <Link to={`/user/${user?.name?.toLowerCase()}`} className="flex items-center gap-2 py-2 text-lg text-cyan-400 hover:text-cyan-300" onClick={() => setShowMobileMenu(false)}>
-                <User size={20} /> My Account
               </Link>
             </motion.div>
           </>

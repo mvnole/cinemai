@@ -21,9 +21,9 @@ function TopFive({ films }) {
             >
               <div
                 className={
-                  "absolute -left-3 " +
+                  "absolute -left-3 transition-opacity duration-300 ease-in-out group-hover:opacity-0 " +
                   (index % 2 === 0 ? "top-16 z-20" : "top-0 z-20") +
-                  " text-[160px] font-extrabold text-white opacity-30 group-hover:opacity-50 drop-shadow-xl leading-none"
+                  " text-[160px] font-extrabold text-white opacity-30 drop-shadow-xl leading-none"
                 }
               >
                 {index + 1}

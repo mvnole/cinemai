@@ -7,6 +7,7 @@ import "video-react/dist/video-react.css";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import { FilmPage } from "./pages/FilmPage";
+import WatchPage from "./pages/WatchPage";
 import { SettingsPage } from "./components/SettingsPage";
 import UserPage from "./pages/UserPage";
 import { FilmPageModal } from "./components/FilmPageModal";
@@ -67,6 +68,7 @@ function App() {
             <Routes location={state?.modal ? state.backgroundLocation || location : location}>
               <Route path="/" element={<HomePage />} />
               <Route path="/movies" element={<h2 className="text-xl">Movies Page (în lucru)</h2>} />
+              <Route path="/watch/:id" element={<WatchPage />} />
               <Route path="/tv-shows" element={<h2 className="text-xl">TV Shows Page (în lucru)</h2>} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/films" element={<FilmsPage />} />

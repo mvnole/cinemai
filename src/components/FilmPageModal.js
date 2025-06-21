@@ -1,32 +1,49 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import films from "../data/films";
 import { Play, Heart, X, Plus } from "lucide-react";
 import { Player, BigPlayButton } from "video-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "video-react/dist/video-react.css";
-import films from "../data/films";
 
-export const FilmPageModal = ({ film, onClose }) => {
-  const modalRef = useRef();
+export function FilmPageModal() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
+  const film = films.find((f) => f.id === id);
+  const modalRef = useRef();
+  const playerRef = useRef(null);
   const [isClosing, setIsClosing] = useState(false);
 
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         setIsClosing(true);
-        setTimeout(() => onClose(), 300);
+        setTimeout(() => navigate(location.state?.backgroundLocation || "/"), 300);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [navigate, location]);
+
+  // Auto-play on ready
+  const handlePlayerReady = () => {
+    const player = playerRef.current;
+    if (player && player.play) {
+      // Mute to allow autoplay
+      player.muted = true;
+      player.play();
+      // Unmute after 500ms
+      setTimeout(() => { player.muted = false; }, 500);
+    }
+  };
 
   if (!film) return null;
 
-  const recommended = films.filter(f => f.id !== film.id && (f.genre === film.genre || !film.genre)).slice(0, 5);
+  const recommended = films
+    .filter((f) => f.id !== film.id && (f.genre === film.genre || !film.genre))
+    .slice(0, 5);
 
   return (
     <AnimatePresence>
@@ -49,23 +66,29 @@ export const FilmPageModal = ({ film, onClose }) => {
             <button
               onClick={() => {
                 setIsClosing(true);
-                setTimeout(() => onClose(), 300);
+                setTimeout(() => navigate(location.state?.backgroundLocation || "/"), 300);
               }}
               className="absolute top-4 right-4 text-gray-300 hover:text-white"
             >
               <X size={28} />
             </button>
 
+            {/* PLAYER */}
             <div className="w-full aspect-video rounded-t-xl overflow-hidden border-b border-zinc-800">
               {film.previewUrl ? (
                 <Player
+                  ref={playerRef}
                   playsInline
+                  autoPlay
+                  muted
                   poster={film.image}
                   src={film.previewUrl}
-                  fluid={true}
+                  fluid
                   className="rounded-none"
+                  onReady={handlePlayerReady}
                 >
-                  <BigPlayButton position="center" />
+                  {/* Hide BigPlayButton */}
+                  <BigPlayButton position="center" style={{ display: 'none' }} />
                 </Player>
               ) : (
                 <img
@@ -76,6 +99,7 @@ export const FilmPageModal = ({ film, onClose }) => {
               )}
             </div>
 
+            {/* DETAILS */}
             <div className="p-6">
               <h1 className="text-3xl font-bold mb-3">{film.title}</h1>
               <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-2">
@@ -83,9 +107,15 @@ export const FilmPageModal = ({ film, onClose }) => {
                 <span>{film.duration || "1h 45min"}</span>
                 <span>{film.rating || "⭐ 4.5 / 5"}</span>
               </div>
-              <p className="text-base text-gray-300 mb-4">{film.description || "Acest film explorează o lume generată de AI..."}</p>
+              <p className="text-base text-gray-300 mb-4">
+                {film.description ||
+                  "Acest film explorează o lume generată de AI..."}
+              </p>
               <div className="flex gap-4 mb-6">
-                <button className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded-lg text-sm font-medium">
+                <button
+                  onClick={() => navigate(`/watch/${film.id}`)}
+                  className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded-lg text-sm font-medium"
+                >
                   <Play size={20} /> Play
                 </button>
                 <button className="flex items-center gap-2 border border-gray-500 hover:border-white px-5 py-2 rounded-lg text-sm text-white font-medium">
@@ -96,6 +126,7 @@ export const FilmPageModal = ({ film, onClose }) => {
                 <span className="font-semibold">Distribuție:</span> {film.cast?.join(", ") || "Actor 1, Actor 2, Actor 3"}
               </div>
 
+              {/* RECOMMENDATIONS */}
               <h2 className="text-xl font-semibold mb-3">Recomandări similare</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {recommended.map((f) => (
@@ -106,7 +137,11 @@ export const FilmPageModal = ({ film, onClose }) => {
                     className="group bg-zinc-800 rounded-lg p-2 hover:bg-zinc-700 transition"
                   >
                     <div className="relative rounded-md overflow-hidden aspect-video mb-2">
-                      <img src={f.image} alt={f.title} className="w-full h-full object-cover" />
+                      <img
+                        src={f.image}
+                        alt={f.title}
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute top-1 right-1 bg-black/80 text-white text-xs px-2 py-0.5 rounded">
                         {f.duration || "1h 45min"}
                       </div>
@@ -123,7 +158,8 @@ export const FilmPageModal = ({ film, onClose }) => {
                       {f.title}
                     </div>
                     <p className="text-xs text-gray-400 line-clamp-3">
-                      {f.description?.slice(0, 120) || "Un film generat de AI despre o aventură spectaculoasă."}
+                      {f.description?.slice(0, 120) ||
+                        "Un film generat de AI despre o aventură spectaculoasă."}
                     </p>
                   </Link>
                 ))}
@@ -134,4 +170,4 @@ export const FilmPageModal = ({ film, onClose }) => {
       )}
     </AnimatePresence>
   );
-};
+}
