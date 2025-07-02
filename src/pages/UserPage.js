@@ -1,14 +1,23 @@
-// pages/UserPage.js
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 import { User, ShieldCheck, Monitor, Users } from "lucide-react";
 
 const UserPage = () => {
-  const { id } = useParams();
+  const { user } = useUser();
+
+  if (!user) {
+    return (
+      <div className="text-white text-center mt-20 text-xl">
+        Trebuie să fii autentificat pentru a vedea această pagină.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto bg-zinc-900 text-white p-8 rounded-xl shadow-lg">
-      <h1 className="text-3xl font-bold mb-6">Contul utilizatorului {id}</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Contul utilizatorului {user.name}
+      </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="flex flex-col gap-4">
@@ -28,14 +37,14 @@ const UserPage = () => {
 
         <div className="md:col-span-3">
           <div className="bg-zinc-800 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Detalii abonament</h2>
-            <p className="mb-2">Plan: <span className="text-cyan-400">Premium</span></p>
-            <p className="mb-2">Membru din: <span className="text-cyan-400">Aprilie 2025</span></p>
-            <p className="mb-2">Următoarea plată: <span className="text-cyan-400">27 Iunie 2025</span></p>
-            <p className="mb-2">Metodă de plată: <span className="text-cyan-400">Visa •••• 2615</span></p>
+            <h2 className="text-xl font-semibold mb-4">Detalii cont</h2>
+            <p className="mb-2">Nume: <span className="text-cyan-400">{user.name}</span></p>
+            <p className="mb-2">Email: <span className="text-cyan-400">{user.email}</span></p>
+            <p className="mb-2">Rol: <span className="text-cyan-400">{user.role}</span></p>
+            <p className="mb-2">Status: <span className="text-cyan-400">Activ</span></p>
 
             <div className="mt-4">
-              <button className="text-sm text-blue-400 hover:underline">Modifică abonamentul</button>
+              <button className="text-sm text-blue-400 hover:underline">Modifică detaliile</button>
             </div>
           </div>
         </div>

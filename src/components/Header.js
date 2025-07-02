@@ -1,24 +1,18 @@
+// Header.js
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Home, Film, Tv, User, LogOut, Menu, Settings } from "lucide-react";
+import { Search, Home, Film, Tv, User, LogOut, Menu, Settings, Pencil } from "lucide-react";
 import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 function Header({ showUsers, setShowUsers, userMenuRef }) {
-  const { user, login, logout } = useUser();
+  const { user, login, logout, loading, setLoading } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [clickedFromButton, setClickedFromButton] = useState(false);
 
   const isActive = (path) => location.pathname === path;
-
-  const handleSwitchUser = (name) => {
-    login(name);
-    setShowUsers(false);
-    setShowMobileMenu(false);
-    navigate("/");
-  };
 
   const handleLogout = () => {
     logout();
@@ -76,6 +70,11 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 text-white">
+        {user && (
+          <span className="hidden sm:inline text-sm bg-zinc-800 px-3 py-1 rounded-full">
+            {user.user_metadata?.username || user.email}
+          </span>
+        )}
         <div className="relative">
           <button
             onClick={() => {
@@ -84,7 +83,7 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
             }}
             className="flex items-center gap-2 hover:text-cyan-400 text-sm sm:text-base"
           >
-            <User size={18} /> {user?.name || "Guest"}
+            <User size={18} /> Profil
           </button>
 
           <AnimatePresence>
@@ -98,20 +97,21 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
                 transition={{ duration: 0.2 }}
                 style={{ originY: 0 }}
               >
-                <div className="px-4 py-2 text-sm text-zinc-300">Switch User</div>
                 <ul className="divide-y divide-zinc-700">
-                  {["Alex", "Mira", "Leo"].map((name) => (
-                    <li key={name}>
-                      <button
-                        onClick={() => handleSwitchUser(name)}
-                        className="w-full px-4 py-2 text-left hover:bg-zinc-700 text-white"
-                      >
-                        {name}
-                      </button>
-                    </li>
-                  ))}
+                  <li>
+                    <div className="px-4 py-2 text-zinc-400">Autentificat ca {user?.user_metadata?.username || user?.email}</div>
+                  </li>
                 </ul>
                 <div className="px-4 py-2 border-t border-zinc-700">
+                  <button
+                    onClick={() => {
+                      setShowUsers(false);
+                      navigate("/manage-profiles");
+                    }}
+                    className="flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 mb-2"
+                  >
+                    <Pencil size={16} /> Manage Profiles
+                  </button>
                   <button
                     onClick={() => {
                       setShowUsers(false);

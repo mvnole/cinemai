@@ -69,31 +69,28 @@ function FilmsPage() {
 
   return (
     <div className="space-y-14 pt-10 overflow-visible">
-      <div className="px-20 sm:px-20">
-        <h2 className="text-6xl font-extrabold text-white tracking-widest mb-8 text-center sm:text-left">
+      <div className="px-4 sm:px-20">
+        <h2 className="text-3xl sm:text-6xl font-extrabold text-white tracking-widest mb-8 text-center sm:text-left">
           <span className="bg-gradient-to-r from-white via-cyan-300 to-white bg-clip-text text-transparent drop-shadow-xl">
             TOP 10 MOVIES TODAY
           </span>
         </h2>
         <div className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
           {isHovered && (
-            <div className="absolute inset-0 z-30 flex justify-between items-center px-2 pointer-events-none">
+            <div className="absolute inset-0 z-30 justify-between items-center px-2 pointer-events-none hidden sm:flex">
               <button
                 onClick={() => handleScroll('left')}
-                className="pointer-events-auto z-40 text-white w-24 h-full flex items-center justify-center sm:flex hidden transition duration-300 ease-in-out"
+                className="pointer-events-auto z-40 text-white w-24 h-full flex items-center justify-center transition duration-300 ease-in-out"
                 aria-label="Scroll Left"
-                style={{ backgroundColor: 'transparent' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
               </button>
-
               <button
                 onClick={() => handleScroll('right')}
-                className="pointer-events-auto z-40 text-white w-24 h-full flex items-center justify-center sm:flex hidden transition duration-300 ease-in-out"
+                className="pointer-events-auto z-40 text-white w-24 h-full flex items-center justify-center transition duration-300 ease-in-out"
                 aria-label="Scroll Right"
-                style={{ backgroundColor: 'transparent' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -106,11 +103,11 @@ function FilmsPage() {
             className="overflow-x-auto scrollbar-invisible cursor-grab active:cursor-grabbing"
             ref={scrollRef}
           >
-            <div className="flex gap-32 w-max pb-10 pt-2 px-12">
+            <div className="flex gap-6 sm:gap-32 w-max pb-10 pt-2 px-2 sm:px-12">
               {top10.map((film, index) => (
                 <div
                   key={film.id}
-                  className="film-card relative w-52 shrink-0 group hover:scale-105 transition-transform duration-300 cursor-pointer"
+                  className="film-card relative w-32 sm:w-52 shrink-0 group hover:scale-105 transition-transform duration-300 cursor-pointer"
                   onMouseDown={() => (hasMoved.current = false)}
                   onMouseMove={() => (hasMoved.current = true)}
                   onClick={() => {
@@ -121,21 +118,21 @@ function FilmsPage() {
                   }}
                 >
                   {(index + 1) % 2 !== 0 && (
-                    <div className="absolute -top-4 -left-10 text-[150px] font-extrabold text-white opacity-20 group-hover:opacity-0 transition-opacity duration-300 drop-shadow-xl leading-none z-30">
+                    <div className="absolute -top-4 -left-6 sm:-left-10 text-[100px] sm:text-[150px] font-extrabold text-white opacity-20 group-hover:opacity-0 transition-opacity duration-300 drop-shadow-xl leading-none z-30">
                       {index + 1}
                     </div>
                   )}
                   <img
                     src={film.image}
                     alt={film.title}
-                    className="w-full h-80 object-cover rounded-xl shadow-xl border-2 border-gray-800 hover:border-white relative z-20"
+                    className="w-full h-44 sm:h-80 object-cover rounded-xl shadow-xl border-2 border-gray-800 hover:border-white relative z-20"
                   />
                   {(index + 1) % 2 === 0 && (
-                    <div className="absolute top-[200px] -left-16 text-[150px] font-extrabold text-white opacity-20 group-hover:opacity-0 transition-opacity duration-300 drop-shadow-xl leading-none z-30">
+                    <div className="absolute top-[100px] sm:top-[200px] -left-6 sm:-left-16 text-[100px] sm:text-[150px] font-extrabold text-white opacity-20 group-hover:opacity-0 transition-opacity duration-300 drop-shadow-xl leading-none z-30">
                       {index + 1}
                     </div>
                   )}
-                  <div className="mt-2 text-center text-sm text-gray-300 group-hover:text-white">
+                  <div className="mt-2 text-center text-xs sm:text-sm text-gray-300 group-hover:text-white">
                     {film.title}
                   </div>
                 </div>

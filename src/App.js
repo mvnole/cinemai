@@ -5,8 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import "video-react/dist/video-react.css";
 
 import HomePage from "./pages/HomePage";
+import ManageProfilesPage from "./pages/ManageProfilesPage";
 import SearchPage from "./pages/SearchPage";
 import { FilmPage } from "./pages/FilmPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import WatchPage from "./pages/WatchPage";
 import { SettingsPage } from "./components/SettingsPage";
 import UserPage from "./pages/UserPage";
@@ -15,6 +17,8 @@ import OutsideClickWrapper from "./components/OutsideClickWrapper";
 import FilmsPage from "./pages/FilmsPage";
 import Header from "./components/Header";
 import RegisterPage from "./pages/RegisterPage";
+import { useUser } from "./context/UserContext";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   const [showUsers, setShowUsers] = useState(false);
@@ -23,6 +27,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state;
+  const { isLoading, user, setIsLoading } = useUser();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -48,12 +53,41 @@ function App() {
     return () => document.removeEventListener("mousedown", handleClickOutsideSettings);
   }, [location, navigate]);
 
+  // 🔁 Fallback: dacă userul e confirmat și fără plan, îl trimitem spre /subscription
+  useEffect(() => {
+  if (
+    !isLoading &&
+    user?.confirmed_at &&
+    location.pathname === "/" &&
+    !user?.user_metadata?.plan
+  ) {
+    navigate("/subscription");
+  }
+}, [isLoading, user, location.pathname, navigate]);
+
+  const fakeUsers = [
+    { name: "Bossulică" },
+    { name: "Andreea cu pisici" },
+    { name: "Gigel 69" },
+    { name: "Ana de la bloc" },
+    { name: "Nea Fănel zis Fanea" },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cyan-400"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-800 text-white">
       <Header
         showUsers={showUsers}
         setShowUsers={setShowUsers}
-        userMenuRef={mobileUserRef} // se folosește și pentru desktop
+        userMenuRef={mobileUserRef}
+        userList={fakeUsers}
       />
 
       <main className="p-6 space-y-10 relative">
@@ -67,6 +101,7 @@ function App() {
           >
             <Routes location={state?.modal ? state.backgroundLocation || location : location}>
               <Route path="/" element={<HomePage />} />
+              <Route path="/manage-profiles" element={<ManageProfilesPage />} />
               <Route path="/movies" element={<h2 className="text-xl">Movies Page (în lucru)</h2>} />
               <Route path="/watch/:id" element={<WatchPage />} />
               <Route path="/tv-shows" element={<h2 className="text-xl">TV Shows Page (în lucru)</h2>} />
@@ -74,15 +109,15 @@ function App() {
               <Route path="/films" element={<FilmsPage />} />
               <Route path="/register" element={<RegisterPage />} />
               {!state?.modal && (
-  <Route
-    path="/film/:id"
-    element={
-      <OutsideClickWrapper redirectTo={location.state?.fromSearch ? "/search" : "/"}>
-        <FilmPage />
-      </OutsideClickWrapper>
-    }
-  />
-)}
+                <Route
+                  path="/film/:id"
+                  element={
+                    <OutsideClickWrapper redirectTo={location.state?.fromSearch ? "/search" : "/"}>
+                      <FilmPage />
+                    </OutsideClickWrapper>
+                  }
+                />
+              )}
               <Route
                 path="/settings"
                 element={
@@ -94,6 +129,8 @@ function App() {
                 }
               />
               <Route path="/user/:id" element={<UserPage />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
+              <Route path="/login" element={<LoginPage />} />
             </Routes>
 
             {/* MODAL film */}

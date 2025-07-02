@@ -1,16 +1,26 @@
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Heart } from "lucide-react";
 
-function FilmCard({ film, location }) {
+function FilmCard({ film }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleClick = () => {
+    navigate(`/film/${film.id}`, {
+      state: {
+        modal: true,
+        backgroundLocation: location
+      }
+    });
+  };
 
   return (
-    <Link
-      to={`/film/${film.id}`}
-      state={{ modal: true, backgroundLocation: location }}
+    <div
+      onClick={handleClick}
       className="relative w-56 shrink-0 block cursor-pointer"
       onMouseEnter={() => {
         setIsHovered(true);
@@ -79,7 +89,7 @@ function FilmCard({ film, location }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </Link>
+    </div>
   );
 }
 
