@@ -169,6 +169,19 @@ const films = [
     likes: 3870
   },
   {
+  id: "echo-hunter",
+  title: "Echo Hunter",
+  genre: "Sci-Fi",
+  image: "/posters/echo-hunter.jpg",
+  previewUrl: "/previews/echo-hunter.mp4",
+  description: "Un vânător cibernetic rătăcește printr-un pustiu postapocaliptic, vânând creaturi AI în căutarea ultimei surse de energie.",
+  duration: "8 min",
+  rating: "⭐ 4.9 / 5",
+  cast: ["Victor Stan", "Elena Dragu", "Ionuț Marinescu"],
+  releaseDate: "2025-07-01",
+  likes: 1931
+},
+  {
     id: "sky-hacker",
     title: "Sky Hacker",
     genre: "Action",

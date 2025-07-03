@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import "video-react/dist/video-react.css";
-
+import EditProfilePage from "./pages/EditProfilePage";
 import HomePage from "./pages/HomePage";
 import ManageProfilesPage from "./pages/ManageProfilesPage";
 import SearchPage from "./pages/SearchPage";
@@ -131,6 +131,7 @@ function App() {
               <Route path="/user/:id" element={<UserPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/edit-profile" element={<EditProfilePage />} />
             </Routes>
 
             {/* MODAL film */}

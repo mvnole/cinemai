@@ -87,50 +87,79 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
           </button>
 
           <AnimatePresence>
-            {showUsers && (
-              <motion.div
-                ref={userMenuRef}
-                className="absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded shadow-lg z-[9999]"
-                initial={{ opacity: 0, scaleY: 0 }}
-                animate={{ opacity: 1, scaleY: 1 }}
-                exit={{ opacity: 0, scaleY: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ originY: 0 }}
-              >
-                <ul className="divide-y divide-zinc-700">
-                  <li>
-                    <div className="px-4 py-2 text-zinc-400">Autentificat ca {user?.user_metadata?.username || user?.email}</div>
-                  </li>
-                </ul>
-                <div className="px-4 py-2 border-t border-zinc-700">
-                  <button
-                    onClick={() => {
-                      setShowUsers(false);
-                      navigate("/manage-profiles");
-                    }}
-                    className="flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 mb-2"
-                  >
-                    <Pencil size={16} /> Manage Profiles
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowUsers(false);
-                      navigate("/settings");
-                    }}
-                    className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-2"
-                  >
-                    <Settings size={16} /> Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300"
-                  >
-                    <LogOut size={16} /> Log Out
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+  {showUsers && (
+    <motion.div
+      ref={userMenuRef}
+      className="absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded shadow-lg z-[9999]"
+      initial={{ opacity: 0, scaleY: 0 }}
+      animate={{ opacity: 1, scaleY: 1 }}
+      exit={{ opacity: 0, scaleY: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ originY: 0 }}
+    >
+      <ul className="divide-y divide-zinc-700">
+        {user && (
+          <li>
+            <div className="px-4 py-2 text-zinc-400">
+              Autentificat ca {user.user_metadata?.username || user.email}
+            </div>
+          </li>
+        )}
+      </ul>
+      <div className="px-4 py-2 border-t border-zinc-700">
+        {user ? (
+          <>
+            <button
+              onClick={() => {
+                setShowUsers(false);
+                navigate("/manage-profiles");
+              }}
+              className="flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 mb-2"
+            >
+              <Pencil size={16} /> Manage Profiles
+            </button>
+            <button
+              onClick={() => {
+                setShowUsers(false);
+                navigate("/settings");
+              }}
+              className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-2"
+            >
+              <Settings size={16} /> Settings
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300"
+            >
+              <LogOut size={16} /> Log Out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => {
+                setShowUsers(false);
+                navigate("/settings");
+              }}
+              className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 mb-2"
+            >
+              <Settings size={16} /> Settings
+            </button>
+            <button
+              onClick={() => {
+                setShowUsers(false);
+                navigate("/register");
+              }}
+              className="flex items-center gap-2 text-sm text-green-400 hover:text-green-300"
+            >
+              <User size={16} /> Register
+            </button>
+          </>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
         </div>
       </div>
 

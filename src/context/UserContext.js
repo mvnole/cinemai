@@ -41,7 +41,7 @@ export function UserProvider({ children }) {
     const isLocalhost = window.location.hostname === "localhost";
     const redirectTo = isLocalhost
       ? "http://localhost:3000/subscription"
-      : "https://cinemai.com/subscription";
+      : "https://cinemai.live/subscription";
 
     const { error } = await supabase.auth.signUp({
       email,
