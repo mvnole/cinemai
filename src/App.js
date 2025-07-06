@@ -18,7 +18,6 @@ import Header from "./components/Header";
 import RegisterPage from "./pages/RegisterPage";
 import { useUser } from "./context/UserContext";
 import LoginPage from "./pages/LoginPage";
-// 👉 importă hookul (ca să fie clar că îl ai la dispoziție peste tot)
 import { useFilms } from "./hooks/useFilms";
 
 function App() {
@@ -43,17 +42,6 @@ function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutsideSettings = (e) => {
-      const settingsWrapper = document.querySelector(".settings-wrapper");
-      if (location.pathname === "/settings" && settingsWrapper && !settingsWrapper.contains(e.target)) {
-        navigate("/");
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutsideSettings);
-    return () => document.removeEventListener("mousedown", handleClickOutsideSettings);
-  }, [location, navigate]);
-
   // 🔁 Fallback: dacă userul e confirmat și fără plan, îl trimitem spre /subscription
   useEffect(() => {
     if (
@@ -66,14 +54,6 @@ function App() {
     }
   }, [loading, user, location.pathname, navigate]);
 
-  const fakeUsers = [
-    { name: "Bossulică" },
-    { name: "Andreea cu pisici" },
-    { name: "Gigel 69" },
-    { name: "Ana de la bloc" },
-    { name: "Nea Fănel zis Fanea" },
-  ];
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
@@ -83,15 +63,20 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-800 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white relative overflow-x-hidden">
       <Header
         showUsers={showUsers}
         setShowUsers={setShowUsers}
         userMenuRef={mobileUserRef}
-        userList={fakeUsers}
       />
 
-      <main className="p-6 space-y-10 relative">
+      {/* Fundal bokeh/gradient - identic cu cel din SearchPage */}
+      <div className="pointer-events-none fixed z-0 inset-0">
+        <div className="absolute w-96 h-96 bg-cyan-400 opacity-20 blur-3xl rounded-full left-[-6rem] top-[-4rem]"></div>
+        <div className="absolute w-72 h-72 bg-violet-500 opacity-10 blur-2xl rounded-full right-[-3rem] top-[60%]"></div>
+      </div>
+
+      <main className="p-6 space-y-10 relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={state?.modal ? state.backgroundLocation?.pathname : location.pathname}
@@ -119,16 +104,8 @@ function App() {
                   }
                 />
               )}
-              <Route
-                path="/settings"
-                element={
-                  <OutsideClickWrapper redirectTo="/">
-                    <div className="settings-wrapper">
-                      <SettingsPage />
-                    </div>
-                  </OutsideClickWrapper>
-                }
-              />
+              {/* 🔥 SettingsPage ca pagină, nu ca modal */}
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/user/:id" element={<UserPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />
               <Route path="/login" element={<LoginPage />} />

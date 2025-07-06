@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Plus, ThumbsUp, ChevronDown } from "lucide-react";
+import { Play, ThumbsUp, ChevronDown } from "lucide-react";
 import { useFavorite } from "../hooks/useFavorite";
 import { useUser } from "../context/UserContext";
 
@@ -10,6 +10,7 @@ function FilmCard({ film }) {
 
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [liked, setLiked] = useState(false); // stare locală pt. like
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
@@ -52,6 +53,11 @@ function FilmCard({ film }) {
       video.currentTime = 0;
     }
   }, [isHovered, videoUrl]); // reacționează și dacă se schimbă sursa!
+
+  function handleLike(e) {
+    e.stopPropagation(); // nu mai pornește modalul!
+    setLiked((prev) => !prev);
+  }
 
   // FavoriteButton custom
   function FavoriteButton() {
@@ -164,12 +170,18 @@ function FilmCard({ film }) {
                 </div>
               </div>
               <div className="flex space-x-4 ml-auto mt-1">
-                <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-full">
-                  <Plus size={20} />
-                </button>
-                <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-full">
-                  <ThumbsUp size={20} />
-                </button>
+                {/* Butonul de plus a fost scos */}
+                <button
+  className={`p-3 bg-zinc-800 hover:bg-zinc-700 rounded-full ${liked ? "text-cyan-400" : "text-white"}`}
+  onClick={e => {
+    e.stopPropagation();
+    setLiked(prev => !prev);
+  }}
+  type="button"
+  aria-label={liked ? "Unlike" : "Like"}
+>
+  <ThumbsUp size={20} />
+</button>
                 {/* FavoriteButton NOU */}
                 <FavoriteButton />
                 <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-full">

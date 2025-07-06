@@ -36,7 +36,7 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
   }, [setShowUsers, userMenuRef, clickedFromButton]);
 
   return (
-    <header className="w-full bg-gradient-to-r from-[#181b20] to-black px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between relative z-[9999] border-b border-zinc-900 shadow-lg">
+    <header className="w-full bg-black/30 backdrop-blur-md px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between relative z-[9999] border-b border-zinc-800 shadow-none">
       <div className="flex items-center gap-3 sm:gap-6">
         <button
           className="md:hidden flex items-center justify-center mr-2"
@@ -89,14 +89,21 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
           <AnimatePresence>
   {showUsers && (
     <motion.div
-      ref={userMenuRef}
-      className="absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded shadow-lg z-[9999]"
-      initial={{ opacity: 0, scaleY: 0 }}
-      animate={{ opacity: 1, scaleY: 1 }}
-      exit={{ opacity: 0, scaleY: 0 }}
-      transition={{ duration: 0.2 }}
-      style={{ originY: 0 }}
-    >
+  ref={userMenuRef}
+  className="absolute right-0 mt-2 w-48 rounded-lg border border-zinc-600 shadow-lg z-[9999]"
+  initial={{ opacity: 0, scaleY: 0 }}
+  animate={{ opacity: 1, scaleY: 1 }}
+  exit={{ opacity: 0, scaleY: 0 }}
+  transition={{ duration: 0.2 }}
+  style={{
+    originY: 0,
+    backgroundColor: "rgba(30, 30, 30, 0.6)",  // fundal negru semi-transparent
+    backdropFilter: "blur(20px)",              // blur mai puternic
+    WebkitBackdropFilter: "blur(20px)",        // suport Safari
+    borderColor: "rgba(255, 255, 255, 0.1)"
+  }}
+>
+
       <ul className="divide-y divide-zinc-700">
         {user && (
           <li>
