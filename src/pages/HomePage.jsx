@@ -1,12 +1,16 @@
 import React from "react";
 import Section from "../components/Section";
-import films from "../data/films";
 import HeroBanner from "../components/HeroBanner";
 import TopFive from "../components/TopFive";
 import { useLocation } from "react-router-dom";
+import { useFilms } from "../hooks/useFilms";
 
 function HomePage() {
   const location = useLocation();
+  const { films, loading } = useFilms();
+
+  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (!films.length) return <div className="text-center py-12">No films available.</div>;
 
   return (
     <div className="space-y-10">

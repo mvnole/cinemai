@@ -1,15 +1,16 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import films from "../data/films";
 import { Play, Heart, X, Plus } from "lucide-react";
 import { Player, BigPlayButton } from "video-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFilms } from "../hooks/useFilms";
 import "video-react/dist/video-react.css";
 
 export function FilmPageModal() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { films, loading } = useFilms();
   const film = films.find((f) => f.id === id);
   const modalRef = useRef();
   const playerRef = useRef(null);
@@ -31,14 +32,13 @@ export function FilmPageModal() {
   const handlePlayerReady = () => {
     const player = playerRef.current;
     if (player && player.play) {
-      // Mute to allow autoplay
       player.muted = true;
       player.play();
-      // Unmute after 500ms
       setTimeout(() => { player.muted = false; }, 500);
     }
   };
 
+  if (loading) return null;
   if (!film) return null;
 
   const recommended = films
@@ -55,9 +55,12 @@ export function FilmPageModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
+          {/* AICI efectul AERO ca la FilmCard */}
           <motion.div
             ref={modalRef}
-            className="relative w-full max-w-4xl bg-zinc-900 text-white rounded-xl shadow-lg max-h-[90vh] overflow-y-auto scrollbar-invisible"
+            className="relative w-full max-w-4xl
+              bg-black/50 backdrop-blur-md border border-white/10 shadow-2xl
+              text-white rounded-xl max-h-[90vh] overflow-y-auto scrollbar-invisible"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
@@ -87,7 +90,6 @@ export function FilmPageModal() {
                   className="rounded-none"
                   onReady={handlePlayerReady}
                 >
-                  {/* Hide BigPlayButton */}
                   <BigPlayButton position="center" style={{ display: 'none' }} />
                 </Player>
               ) : (
@@ -108,8 +110,7 @@ export function FilmPageModal() {
                 <span>{film.rating || "⭐ 4.5 / 5"}</span>
               </div>
               <p className="text-base text-gray-300 mb-4">
-                {film.description ||
-                  "Acest film explorează o lume generată de AI..."}
+                {film.description || "Acest film explorează o lume generată de AI..."}
               </p>
               <div className="flex gap-4 mb-6">
                 <button
@@ -158,8 +159,7 @@ export function FilmPageModal() {
                       {f.title}
                     </div>
                     <p className="text-xs text-gray-400 line-clamp-3">
-                      {f.description?.slice(0, 120) ||
-                        "Un film generat de AI despre o aventură spectaculoasă."}
+                      {f.description?.slice(0, 120) || "Un film generat de AI despre o aventură spectaculoasă."}
                     </p>
                   </Link>
                 ))}

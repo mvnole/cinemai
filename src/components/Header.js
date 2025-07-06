@@ -36,7 +36,7 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
   }, [setShowUsers, userMenuRef, clickedFromButton]);
 
   return (
-    <header className="w-full bg-gradient-to-b from-zinc-900 via-zinc-800 to-zinc-900 px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between relative z-[9999]">
+    <header className="w-full bg-gradient-to-r from-[#181b20] to-black px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between relative z-[9999] border-b border-zinc-900 shadow-lg">
       <div className="flex items-center gap-3 sm:gap-6">
         <button
           className="md:hidden flex items-center justify-center mr-2"

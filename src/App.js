@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -19,6 +18,8 @@ import Header from "./components/Header";
 import RegisterPage from "./pages/RegisterPage";
 import { useUser } from "./context/UserContext";
 import LoginPage from "./pages/LoginPage";
+// 👉 importă hookul (ca să fie clar că îl ai la dispoziție peste tot)
+import { useFilms } from "./hooks/useFilms";
 
 function App() {
   const [showUsers, setShowUsers] = useState(false);
@@ -27,7 +28,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state;
-  const { isLoading, user, setIsLoading } = useUser();
+  const { loading, user, setLoading } = useUser();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -55,15 +56,15 @@ function App() {
 
   // 🔁 Fallback: dacă userul e confirmat și fără plan, îl trimitem spre /subscription
   useEffect(() => {
-  if (
-    !isLoading &&
-    user?.confirmed_at &&
-    location.pathname === "/" &&
-    !user?.user_metadata?.plan
-  ) {
-    navigate("/subscription");
-  }
-}, [isLoading, user, location.pathname, navigate]);
+    if (
+      !loading &&
+      user?.confirmed_at &&
+      location.pathname === "/" &&
+      !user?.user_metadata?.plan
+    ) {
+      navigate("/subscription");
+    }
+  }, [loading, user, location.pathname, navigate]);
 
   const fakeUsers = [
     { name: "Bossulică" },
@@ -73,7 +74,7 @@ function App() {
     { name: "Nea Fănel zis Fanea" },
   ];
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-cyan-400"></div>

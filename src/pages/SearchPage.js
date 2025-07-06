@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import FilmCard from "../components/FilmCard";
-import films from "../data/films";
+import { useFilms } from "../hooks/useFilms"; // 🔥 import hook
 
 function Dropdown({ label, options, value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -43,11 +43,21 @@ function SearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 🔥 Folosești hook-ul cu search live după titlu!
+  const { films, loading } = useFilms(query);
+  console.log("FILMS FROM DB:", films);
+
+  // Filtrare suplimentară după gen și rating (poate adaugi și în backend pe viitor)
   const filteredFilms = films.filter((film) => {
-    const matchesQuery = film.title.toLowerCase().includes(query.toLowerCase());
     const matchesGenre = genreFilter ? film.genre === genreFilter : true;
-    const matchesRating = ratingFilter ? parseFloat(film.rating?.split(" ")[1]) >= parseFloat(ratingFilter) : true;
-    return matchesQuery && matchesGenre && matchesRating;
+    const matchesRating = ratingFilter
+      ? parseFloat(
+          typeof film.rating === "string"
+            ? film.rating?.split(" ")[1]
+            : film.rating
+        ) >= parseFloat(ratingFilter)
+      : true;
+    return matchesGenre && matchesRating;
   });
 
   const handleFilmClick = (film) => {
@@ -98,19 +108,23 @@ function SearchPage() {
         />
       </div>
 
-      <div className="space-y-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 gap-y-6 mt-24 sm:mt-48">
-          {filteredFilms.map((film) => (
-            <div
-              key={film.id}
-              onClick={() => handleFilmClick(film)}
-              className="relative w-full h-full cursor-pointer transform transition duration-300 hover:scale-105 hover:z-50 origin-center z-0"
-            >
-              <FilmCard film={{ ...film, showTitleOverlay: false }} />
-            </div>
-          ))}
+      {loading ? (
+        <div className="text-center py-12">Loading...</div>
+      ) : (
+        <div className="space-y-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-2 gap-y-6 mt-24 sm:mt-48">
+            {filteredFilms.map((film) => (
+              <div
+                key={film.id}
+                onClick={() => handleFilmClick(film)}
+                className="relative w-full h-full cursor-pointer transform transition duration-300 hover:scale-105 hover:z-50 origin-center z-0"
+              >
+                <FilmCard film={{ ...film, showTitleOverlay: false }} />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

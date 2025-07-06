@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import Section from "../components/Section";
-import films from "../data/films";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useFilms } from "../hooks/useFilms"; // 🚀 import hook
 
 function FilmsPage() {
   const location = useLocation();
@@ -12,6 +12,9 @@ function FilmsPage() {
   const scrollLeft = useRef(0);
   const hasMoved = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // 🚀 Filmele din Supabase!
+  const { films, loading } = useFilms();
 
   useEffect(() => {
     const slider = scrollRef.current;
@@ -56,6 +59,9 @@ function FilmsPage() {
       slider.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
+
+  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (!films.length) return <div className="text-center py-12">No films available.</div>;
 
   const genres = [...new Set(films.map(f => f.genre))];
   const top10 = films.slice(0, 10);
