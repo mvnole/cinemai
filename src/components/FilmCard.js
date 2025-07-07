@@ -105,11 +105,11 @@ function FilmCard({ film }) {
 
   return (
     <div
-      onClick={handleClick}
-      className="relative w-64 shrink-0 cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+  onClick={handleClick}
+  className="relative w-full h-full cursor-pointer"
+  onMouseEnter={() => setIsHovered(true)}
+  onMouseLeave={() => setIsHovered(false)}
+>
       <img
         src={film.image}
         alt={film.title}
