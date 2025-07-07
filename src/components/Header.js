@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, Home, Film, Tv, User, LogOut, Menu, Settings, Pencil } from "lucide-react";
 import { useUser } from "../context/UserContext";
@@ -11,6 +11,9 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [clickedFromButton, setClickedFromButton] = useState(false);
 
+  // refs pentru focus & click-out
+  const dropdownRef = useRef(null);
+
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
@@ -20,22 +23,20 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
     navigate("/register");
   };
 
+  // Inchide meniul la click in afara sau pe user button
   useEffect(() => {
     function handleClickOutside(event) {
-      if (clickedFromButton) {
-        setClickedFromButton(false);
-        return;
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)
+        && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowUsers(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setShowUsers, userMenuRef, clickedFromButton]);
+  }, [setShowUsers, userMenuRef]);
 
   return (
-    <header className="w-full bg-[#18181b] md:bg-black/30 md:backdrop-blur-md px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between relative z-1 border-b border-zinc-800 shadow-none">
+    <header className="w-full bg-[#18181b] md:bg-black/30 md:backdrop-blur-md px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-[100] border-b border-zinc-800 shadow-none">
       <div className="flex items-center gap-3 sm:gap-6">
         <button
           className="md:hidden flex items-center justify-center mr-2"
@@ -44,7 +45,6 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
         >
           <Menu size={32} className="text-white" />
         </button>
-
         <Link
           to="/"
           className="text-2xl sm:text-4xl font-bold flex items-center transition-opacity hover:opacity-80"
@@ -76,27 +76,22 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
         )}
         <div className="relative">
           <button
-            onClick={() => {
-              setClickedFromButton(true);
-              setShowUsers((prev) => !prev);
-            }}
+            onClick={() => setShowUsers((prev) => !prev)}
             className="flex items-center gap-2 hover:text-cyan-400 text-sm sm:text-base"
+            ref={userMenuRef}
           >
             <User size={18} /> Profil
           </button>
 
-          {/* USER MENU DROPDOWN CU GRADIENT VERTICAL */}
+          {/* USER MENU DROPDOWN CU AERO BLUR */}
           <AnimatePresence>
             {showUsers && (
               <motion.div
-                ref={userMenuRef}
-                className="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl border border-white/10 z-[9999] overflow-hidden"
-                style={{
-                  background: "linear-gradient(180deg, #18181b 0%, #232137 100%)"
-                }}
+                ref={dropdownRef}
+                className="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl border border-white/10 z-[9999] overflow-hidden bg-black/60 backdrop-blur-md"
                 initial={{ opacity: 0, y: -20 }}
-animate={{ opacity: 1, y: 0 }}
-exit={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
               >
                 <ul className="divide-y divide-zinc-700">
                   {user && (
@@ -146,15 +141,13 @@ exit={{ opacity: 0, y: -20 }}
                       >
                         <Settings size={16} /> Settings
                       </button>
-                      <button
-                        onClick={() => {
-                          setShowUsers(false);
-                          navigate("/register");
-                        }}
-                        className="flex items-center gap-2 text-sm text-green-300 hover:text-green-200"
-                      >
-                        <User size={16} /> Register
-                      </button>
+                      <Link
+  to="/register"
+  onClick={() => setShowUsers(false)}
+  className="flex items-center gap-2 text-sm text-green-300 hover:text-green-200"
+>
+  <User size={16} /> Register
+</Link>
                     </>
                   )}
                 </div>
@@ -167,39 +160,33 @@ exit={{ opacity: 0, y: -20 }}
       {/* MENIU HAMBURGER MOBILE CU FUNDAL SOLID */}
       <AnimatePresence>
         {showMobileMenu && (
-          <>
-            
-            <motion.div
-  className="fixed top-0 left-0 w-64 h-full z-[999] flex flex-col py-8 px-6 gap-4 shadow-2xl"
-  style={{
-    background: "#18181b", // CULOARE SOLIDĂ PESTE TOT
-  }}
-  initial={{ x: "-100%" }}
-  animate={{ x: 0 }}
-  exit={{ x: "-100%" }}
-  transition={{ duration: 0.22 }}
->
-              <button
-                onClick={() => setShowMobileMenu(false)}
-                className="self-end mb-8 text-gray-200 hover:text-white text-2xl"
-                aria-label="Close menu"
-              >
-                ✕
-              </button>
-              <Link to="/" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
-                <Home size={20} /> Home
-              </Link>
-              <Link to="/films" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
-                <Film size={20} /> Movies
-              </Link>
-              <Link to="/tv-shows" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
-                <Tv size={20} /> Series
-              </Link>
-              <Link to="/search" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
-                <Search size={20} /> Search
-              </Link>
-            </motion.div>
-          </>
+          <motion.div
+            className="fixed top-0 left-0 w-64 h-full z-[999] flex flex-col py-8 px-6 gap-4 shadow-2xl bg-[#18181b]"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.22 }}
+          >
+            <button
+              onClick={() => setShowMobileMenu(false)}
+              className="self-end mb-8 text-gray-200 hover:text-white text-2xl"
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+            <Link to="/" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
+              <Home size={20} /> Home
+            </Link>
+            <Link to="/films" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
+              <Film size={20} /> Movies
+            </Link>
+            <Link to="/tv-shows" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
+              <Tv size={20} /> Series
+            </Link>
+            <Link to="/search" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
+              <Search size={20} /> Search
+            </Link>
+          </motion.div>
         )}
       </AnimatePresence>
     </header>

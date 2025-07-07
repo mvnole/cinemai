@@ -107,7 +107,6 @@ function Input({ icon, ...props }) {
   );
 }
 
-// ---- REGISTER PAGE PRINCIPAL ----
 function RegisterPage() {
   const navigate = useNavigate();
   const { register, user } = useUser();
@@ -121,7 +120,37 @@ function RegisterPage() {
     birthDate: "",
     gender: ""
   });
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Inserare profile după confirmarea userului (opțional, doar dacă vrei)
+  useEffect(() => {
+    if (!user?.id) return;
+    const addProfile = async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      if (prof) return;
+      const meta = user.user_metadata || {};
+      const now = new Date().toISOString();
+      await supabase.from("profiles").insert({
+        id: user.id,
+        email: user.email,
+        username: meta.username || "",
+        full_name: meta.fullName || "",
+        birth_date: meta.birthDate || "",
+        gender: meta.gender || "",
+        accepted_privacy: true,
+        accepted_privacy_at: now,
+        accepted_terms: true,
+        accepted_terms_at: now,
+      });
+    };
+    addProfile();
+  }, [user]);
 
   useEffect(() => {
     const header = document.querySelector("header");
@@ -139,13 +168,11 @@ function RegisterPage() {
       }
     };
     checkSession();
-
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user?.confirmed_at) {
         navigate("/subscription");
       }
     });
-
     return () => {
       authListener.subscription.unsubscribe();
     };
@@ -159,11 +186,30 @@ function RegisterPage() {
     e.preventDefault();
     const { fullName, username, email, password, confirmPassword, birthDate, gender } = formData;
 
+    // Validare minim 16 ani
+    const birth = new Date(birthDate);
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear() - (
+      today.getMonth() < birth.getMonth() ||
+      (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0
+    );
+    if (age < 16) {
+      alert("You must be at least 16 years old to register.");
+      return;
+    }
+
     if (!fullName || !username || !email || !password || !confirmPassword || !birthDate || !gender) {
       alert("Complete all fields.");
       return;
     }
-
+    if (!acceptedPrivacy) {
+      alert("You must accept the Privacy Policy to register.");
+      return;
+    }
+    if (!acceptedTerms) {
+      alert("You must accept the Terms & Conditions to register.");
+      return;
+    }
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
@@ -175,7 +221,11 @@ function RegisterPage() {
         fullName,
         username,
         birthDate,
-        gender
+        gender,
+        accepted_privacy: true,
+        accepted_privacy_at: new Date().toISOString(),
+        accepted_terms: true,
+        accepted_terms_at: new Date().toISOString(),
       });
       alert("Account created! Check your email for confirmation.");
     } catch (error) {
@@ -187,7 +237,7 @@ function RegisterPage() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
-      {/* Fundal filmcarduri cinematic */}
+      {/* Fundal cinematic */}
       <div className="fixed inset-0 z-0">
         <img
           src="/backgrounds/background.png"
@@ -195,24 +245,22 @@ function RegisterPage() {
           className="w-full h-full object-cover object-center"
           style={{ filter: "brightness(0.7) blur(0.5px)" }}
         />
-        {/* Overlay subtil pentru contrast */}
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      {/* Card central cu glassmorphism */}
       <div
-  className="relative z-10 w-full max-w-lg
+        className="relative z-10 w-full max-w-lg
     bg-white/10 backdrop-blur-2xl
     border border-cyan-300/20
     rounded-3xl shadow-xl p-10 flex flex-col items-center"
-  style={{
-    background:
-      "linear-gradient(120deg,rgba(18,24,36,0.32) 70%,rgba(39,200,245,0.08) 100%)",
-    boxShadow:
-      "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
-    border: "1px solid rgba(34,211,238,0.13)"
-  }}
->
+        style={{
+          background:
+            "linear-gradient(120deg,rgba(18,24,36,0.32) 70%,rgba(39,200,245,0.08) 100%)",
+          boxShadow:
+            "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
+          border: "1px solid rgba(34,211,238,0.13)"
+        }}
+      >
         {/* Logo + tagline */}
         <img
           src="/logo-cinemai.png"
@@ -231,6 +279,38 @@ function RegisterPage() {
           <Input icon={<FaLock />} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
           <DateInput value={formData.birthDate} onChange={e => setFormData(f => ({ ...f, birthDate: e.target.value }))} />
           <GenderDropdown value={formData.gender} setValue={v => setFormData(f => ({ ...f, gender: v }))} />
+
+          {/* Checkbox Privacy Policy */}
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              id="privacy"
+              type="checkbox"
+              checked={acceptedPrivacy}
+              onChange={e => setAcceptedPrivacy(e.target.checked)}
+              className="accent-cyan-400 w-4 h-4"
+              required
+            />
+            <label htmlFor="privacy" className="text-sm text-zinc-200">
+              I accept the{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Privacy Policy</a>
+            </label>
+          </div>
+          {/* Checkbox Terms & Conditions */}
+          <div className="flex items-center gap-2 -mt-2">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={e => setAcceptedTerms(e.target.checked)}
+              className="accent-cyan-400 w-4 h-4"
+              required
+            />
+            <label htmlFor="terms" className="text-sm text-zinc-200">
+              I accept the{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Terms & Conditions</a>
+            </label>
+          </div>
+
           <motion.button
             type="submit"
             disabled={loading}

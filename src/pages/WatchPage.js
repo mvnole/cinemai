@@ -71,11 +71,11 @@ export default function WatchPage() {
 
   // Auto-hide controls + cursor
   useEffect(() => {
-    const show = () => {
+    function show() {
       setShowControls(true);
       clearTimeout(controlsTimeout.current);
       controlsTimeout.current = setTimeout(() => setShowControls(false), 2200);
-    };
+    }
     window.addEventListener("mousemove", show);
     window.addEventListener("touchstart", show);
     show();
@@ -86,11 +86,11 @@ export default function WatchPage() {
     };
   }, []);
 
-  // Fullscreen listener
+  // Fullscreen change listener
   useEffect(() => {
-    const onfs = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
-    document.addEventListener("fullscreenchange", onfs);
-    return () => document.removeEventListener("fullscreenchange", onfs);
+    const onFs = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
   const fmt = (t) => {
@@ -101,26 +101,24 @@ export default function WatchPage() {
     return h ? `${h}:${m}:${s}` : `${m}:${s}`;
   };
 
-  // Request fullscreen on container if available
   const requestFullscreen = () => {
     const el = containerRef.current;
-    if (el && el.requestFullscreen) {
-      el.requestFullscreen().catch(() => {});
-    }
+    if (el && el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  };
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   };
 
+  // Play/Pause handlers
   const handlePlayPause = (e) => {
     e.stopPropagation();
-    const vid = videoRef.current;
-    if (!vid) return;
-    if (vid.paused) {
-      // On mobile, request fullscreen on play
+    if (videoRef.current.paused) {
       if (isMobileDevice()) requestFullscreen();
-      vid.play();
+      videoRef.current.play();
       setIsPlaying(true);
       setCenterAction("play");
     } else {
-      vid.pause();
+      videoRef.current.pause();
       setIsPlaying(false);
       setCenterAction("pause");
     }
@@ -130,41 +128,30 @@ export default function WatchPage() {
 
   const handleSkip = (sec) => {
     const vid = videoRef.current;
-    if (vid?.duration) vid.currentTime = Math.min(Math.max(vid.currentTime + sec, 0), vid.duration);
+    if (vid.duration) vid.currentTime = Math.min(Math.max(vid.currentTime + sec, 0), vid.duration);
   };
 
   const toggleMute = (e) => { e.stopPropagation(); setIsMuted((m) => !m); };
 
-  const toggleFullscreen = (e) => {
+  const handleFsButton = (e) => {
     e.stopPropagation();
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    } else if (!isMobileDevice()) {
-      // Only request fullscreen on desktop via button
+    if (isFullscreen) {
+      exitFullscreen();
+    } else {
       requestFullscreen();
     }
   };
 
   const seek = (e) => {
-    const bar = seekBarRef.current; const vid = videoRef.current;
+    const bar = seekBarRef.current;
+    const vid = videoRef.current;
     if (!bar || !vid || !duration) return;
     const rect = bar.getBoundingClientRect();
     const x = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
     vid.currentTime = Math.max(0, Math.min(1, (x - rect.left) / rect.width)) * duration;
   };
-  const startSeek = (e) => {
-    seek(e);
-    window.addEventListener("mousemove", seek);
-    window.addEventListener("mouseup", stopSeek);
-    window.addEventListener("touchmove", seek);
-    window.addEventListener("touchend", stopSeek);
-  };
-  const stopSeek = () => {
-    window.removeEventListener("mousemove", seek);
-    window.removeEventListener("mouseup", stopSeek);
-    window.removeEventListener("touchmove", seek);
-    window.removeEventListener("touchend", stopSeek);
-  };
+  const startSeek = (e) => { seek(e); window.addEventListener("mousemove", seek); window.addEventListener("mouseup", stopSeek); window.addEventListener("touchmove", seek); window.addEventListener("touchend", stopSeek); };
+  const stopSeek = () => { window.removeEventListener("mousemove", seek); window.removeEventListener("mouseup", stopSeek); window.removeEventListener("touchmove", seek); window.removeEventListener("touchend", stopSeek); };
 
   if (loading) return <div className="text-white p-8">Loading...</div>;
   if (!film) return <div className="text-white p-8">Film inexistent</div>;
@@ -172,27 +159,32 @@ export default function WatchPage() {
   const mobilePortrait = isMobileDevice() && !isFullscreen;
 
   return (
-    <div className="w-full bg-black select-none overflow-hidden">
+    <div className={`relative w-full ${mobilePortrait ? 'h-auto' : 'h-screen'} bg-black select-none ${showControls ? '' : 'cursor-none'}`}>      
       <div
         ref={containerRef}
-        className={mobilePortrait ? "relative w-full h-auto" : "relative w-full h-screen"}
-        onClick={handlePlayPause}
-        
-      >
+        className="relative w-full h-full"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isMobileDevice()) {
+            setShowControls(true);
+            clearTimeout(controlsTimeout.current);
+            controlsTimeout.current = setTimeout(() => setShowControls(false), 2200);
+          } else {
+            handlePlayPause(e);
+          }
+        }}
       >
         <video
+          autoPlay
           ref={videoRef}
           src={videoUrl}
-          className={mobilePortrait
-            ? "w-full h-auto object-contain"
-            : "absolute inset-0 w-full h-full object-cover"
-          }
-          autoPlay
+          className={mobilePortrait ? 'w-full h-auto object-contain' : 'absolute inset-0 w-full h-full object-cover'}
           muted={isMuted}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
 
+        {/* Center animation */}
         <AnimatePresence>
           {centerAction && (
             <motion.div
@@ -202,100 +194,95 @@ export default function WatchPage() {
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             >
-              {centerAction === 'play'
-                ? <Play size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
-                : <Pause size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
-              }
+              {centerAction === 'play' ? (
+                <Play size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
+              ) : (
+                <Pause size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div
-          className={
-            `absolute bottom-0 left-0 w-full z-20 transition-opacity duration-200 ` +
-            (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
-          }
-          style={{ padding: controlPadding }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex justify-end px-5 pb-1">
-            <span className="text-white font-mono text-sm">
-              {fmt(currentTime)} / {fmt(duration)}
-            </span>
-          </div>
-
-          <div
-            ref={seekBarRef}
-            className="mx-auto h-[4px] w-full bg-zinc-200 relative cursor-pointer mb-1"
-            onClick={seek}
-            onMouseDown={startSeek}
-            onTouchStart={startSeek}
-          >
-            <div
-              className="h-[4px] bg-cyan-400 absolute left-0 top-0 rounded-full"
-              style={{ width: `${progress}%` }}
-            />
-            <div
-              className="absolute top-1/2"
-              style={{ left: `calc(${progress}% - 6px)`, transform: 'translateY(-50%)' }}
+        {/* Controls bar */}
+        <AnimatePresence>
+          {showControls && (
+            <motion.div
+              className="absolute bottom-0 left-0 w-full z-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ padding: controlPadding }}
             >
-              <div className="w-3 h-3 rounded-full bg-white border-2 border-cyan-400" />
-            </div>
-          </div>
+              {/* Time */}
+              <div className="flex justify-end px-5 pb-1">
+                <span className="text-white font-mono text-sm">
+                  {fmt(currentTime)} / {fmt(duration)}
+                </span>
+              </div>
 
-          <div className="flex items-center justify-between px-5 pt-1">
-            <div className="flex items-center gap-3">
-              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(-10)}>
-                <RotateCcw size={iconSize - 4} />
-              </button>
-              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={handlePlayPause}>
-                {isPlaying
-                  ? <Pause size={iconSize} />
-                  : <Play size={iconSize} />
-                }
-              </button>
-              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(10)}>
-                <RotateCw size={iconSize - 4} />
-              </button>
-              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={toggleMute}>
-                {isMuted || volume === 0
-                  ? <VolumeX size={iconSize - 4} />
-                  : <Volume2 size={iconSize - 4} />
-                }
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={isMuted ? 0 : volume}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value);
-                  if (videoRef.current) {
-                    videoRef.current.volume = v;
-                    videoRef.current.muted = v === 0;
-                  }
-                  setVolume(v);
-                  setIsMuted(v === 0);
-                }}
-                className={`${rangeWidthClass} accent-cyan-400`}
-              />
-            </div>
+              {/* Progress */}
+              <div
+                ref={seekBarRef}
+                className="mx-auto h-[4px] w-full bg-zinc-200 relative cursor-pointer mb-1"
+                onClick={seek}
+                onMouseDown={startSeek}
+                onTouchStart={startSeek}
+              >
+                <div
+                  className="h-[4px] bg-cyan-400 absolute left-0 top-0 rounded-full"
+                  style={{ width: `${progress}%` }}
+                />
+                <div className="absolute top-1/2" style={{ left: `calc(${progress}% - 6px)`, transform: 'translateY(-50%)' }}>
+                  <div className="w-3 h-3 rounded-full bg-white border-2 border-cyan-400" />
+                </div>
+              </div>
 
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <span className="text-white text-sm font-semibold">{filmTitle}</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={toggleFullscreen}>
-                {isFullscreen
-                  ? <Minimize2 size={iconSize - 2} />
-                  : <Maximize2 size={iconSize - 2} />
-                }
-              </button>
-            </div>
-          </div>
-        </div>
+              {/* Buttons row */}
+              <div className="flex items-center justify-between px-5 pt-1">
+                <div className="flex items-center gap-3">
+                  <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(-10)}>
+                    <RotateCcw size={iconSize - 4} />
+                  </button>
+                  <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={handlePlayPause}>
+                    {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
+                  </button>
+                  <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(10)}>
+                    <RotateCw size={iconSize - 4} />
+                  </button>
+                  <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={toggleMute}>
+                    {isMuted || volume === 0 ? <VolumeX size={iconSize - 4} /> : <Volume2 size={iconSize - 4} />}
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (videoRef.current) {
+                        videoRef.current.volume = v;
+                        videoRef.current.muted = v === 0;
+                      }
+                      setVolume(v);
+                      setIsMuted(v === 0);
+                    }}
+                    className={`${rangeWidthClass} accent-cyan-400`}
+                  />
+                </div>
+                <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                  <span className="text-white text-sm font-semibold">{filmTitle}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={handleFsButton}>
+                    {isFullscreen ? <Minimize2 size={iconSize - 2} /> : <Maximize2 size={iconSize - 2} />}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

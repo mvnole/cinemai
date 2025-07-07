@@ -22,7 +22,7 @@ const HeroBanner = ({ videoId }) => {
   };
 
   return (
-    <div className="hidden sm:block relative w-screen h-screen overflow-hidden pb-24">
+    <div className="hidden sm:block relative w-screen h-screen overflow-hidden pb-24 z-0">
       <div className="absolute inset-0 z-0 pointer-events-none">
         <YouTube
           videoId={videoId}
@@ -31,8 +31,8 @@ const HeroBanner = ({ videoId }) => {
           iframeClassName="absolute top-0 left-0 w-full h-full object-cover"
         />
       </div>
-      <div className="absolute inset-0 bg-black/60 z-10" />
-      <div className="relative z-20 p-10 max-w-2xl text-gray-200">
+      <div className="absolute inset-0 bg-black/60 z-0" /> {/* Schimbat z-1 -> z-0 */}
+      <div className="relative z-0 p-10 max-w-2xl text-gray-200"> {/* Schimbat z-20 -> z-0 */}
         <p className="text-xs uppercase mb-2">AI ORIGINAL</p>
         <h1 className="text-6xl font-extrabold mb-6">Trending AI Movie</h1>
         <p className="text-base mb-8">Experience the most advanced AI-generated story yet. CinemAI takes you to the edge of reality.</p>
