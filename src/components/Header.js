@@ -24,6 +24,10 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
   };
 
   // Inchide meniul la click in afara sau pe user button
+ useEffect(() => {
+    setShowUsers(false);
+  }, [location.pathname]);
+  
   useEffect(() => {
     function handleClickOutside(event) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)
@@ -31,6 +35,7 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
         setShowUsers(false);
       }
     }
+    
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setShowUsers, userMenuRef]);

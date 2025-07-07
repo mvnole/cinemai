@@ -106,7 +106,7 @@ export function FilmPageModal() {
               <h1 className="text-3xl font-bold mb-3">{film.title}</h1>
               <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-2">
                 <span>{film.genre}</span>
-                <span>{film.duration || "1h 45min"}</span>
+                <span>{film.duration || "22 min"}</span>
                 <span>{film.rating || "⭐ 4.5 / 5"}</span>
               </div>
               <p className="text-base text-gray-300 mb-4">
@@ -124,11 +124,11 @@ export function FilmPageModal() {
                 </button>
               </div>
               <div className="text-xs text-gray-400 mb-6">
-                <span className="font-semibold">Distribuție:</span> {film.cast?.join(", ") || "Actor 1, Actor 2, Actor 3"}
+                <span className="font-semibold">Credits:</span> {film.cast?.join(", ") || "A Kavan the Kid Film"}
               </div>
 
               {/* RECOMMENDATIONS */}
-              <h2 className="text-xl font-semibold mb-3">Recomandări similare</h2>
+              <h2 className="text-xl font-semibold mb-3">Recommendations</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {recommended.map((f) => (
                   <Link
@@ -144,7 +144,7 @@ export function FilmPageModal() {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-1 right-1 bg-black/80 text-white text-xs px-2 py-0.5 rounded">
-                        {f.duration || "1h 45min"}
+                        {f.duration || "22 min"}
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
