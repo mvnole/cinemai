@@ -34,7 +34,7 @@ function CookieConsentBanner() {
         const { data: profile } = await supabase
           .from("profiles")
           .select("accepted_privacy, accepted_terms")
-          .eq("user_id", user.id) // <-- aici schimbi
+          .eq("user_id", user.id) // <-- aici schimbi dacă coloana ta e user_id
           .single();
         if (!profile?.accepted_privacy || !profile?.accepted_terms) {
           setVisible(true);
@@ -51,25 +51,30 @@ function CookieConsentBanner() {
   }, [user]);
 
   const handleAccept = async () => {
-  localStorage.setItem("cinemai_cookie_consent", "accepted");
-  if (user?.id) {
-    const now = new Date().toISOString();
-    await supabase.from("profiles").update({
-      accepted_privacy: true,
-      accepted_privacy_at: now,
-      accepted_terms: true,
-      accepted_terms_at: now,
-      // Completează și celelalte câmpuri dacă lipsesc
-      email: user.email || undefined,
-      username: user.user_metadata?.username || undefined,
-      full_name: user.user_metadata?.fullName || undefined,
-      gender: user.user_metadata?.gender || undefined,
-      birth_date: user.user_metadata?.birthDate || undefined,
-    }).eq("user_id", user.id);
-  }
-  setVisible(false);
-};
+    localStorage.setItem("cinemai_cookie_consent", "accepted");
+    if (user?.id) {
+      const now = new Date().toISOString();
+      await supabase.from("profiles").update({
+        accepted_privacy: true,
+        accepted_privacy_at: now,
+        accepted_terms: true,
+        accepted_terms_at: now,
+        // Completează și celelalte câmpuri dacă lipsesc
+        email: user.email || undefined,
+        username: user.user_metadata?.username || undefined,
+        full_name: user.user_metadata?.fullName || undefined,
+        gender: user.user_metadata?.gender || undefined,
+        birth_date: user.user_metadata?.birthDate || undefined,
+      }).eq("user_id", user.id);
+    }
+    setVisible(false);
+  };
 
+  // **Asta lipsea!**
+  const handleDecline = () => {
+    localStorage.setItem("cinemai_cookie_consent", "declined");
+    setVisible(false);
+  };
 
   if (!visible) return null;
 
