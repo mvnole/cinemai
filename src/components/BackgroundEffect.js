@@ -3,12 +3,13 @@ import React from "react";
 export default function BackgroundEffect() {
   return (
     <>
-      {/* Fundal gradient blurat animat */}
+      {/* Fundal gradient animat (fără blur) */}
       <div
         className="fixed inset-0 z-0 pointer-events-none animate-gradient-move"
         style={{
           background: "linear-gradient(120deg, #15121d 0%, #1e2337 20%, #0e7490 60%, #7e1fe4 100%)",
-          filter: "blur(2px) brightness(1.12)",
+          // filter: "blur(2px) brightness(1.12)",  // eliminat BLUR
+          filter: "brightness(1.12)",
         }}
       />
       {/* Lumini bokeh blurate */}

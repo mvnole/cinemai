@@ -1,313 +1,302 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useFilms } from "../hooks/useFilms";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  SkipBack,
-  SkipForward,
-  Volume2,
-  Subtitles,
-  Maximize2,
   Play,
   Pause,
-  X,
+  RotateCcw,
+  RotateCw,
+  Volume2,
+  VolumeX,
+  Maximize2,
   Minimize2,
 } from "lucide-react";
 
-function WatchPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const videoRef = useRef(null);
-  const containerRef = useRef(null);
+// Detect mobile devices
+const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
 
+export default function WatchPage() {
+  const { id } = useParams();
   const { films, loading } = useFilms();
+  const film = films.find((f) => String(f.id) === String(id));
+
+  const containerRef = useRef();
+  const videoRef = useRef();
+  const seekBarRef = useRef();
+  const controlsTimeout = useRef();
+  const centerTimeout = useRef();
+
+  const [showControls, setShowControls] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [overlayIcon, setOverlayIcon] = useState(null);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [showControls, setShowControls] = useState(true);
-  const [showSubsOptions, setShowSubsOptions] = useState(false);
-  const [currentSubtitle, setCurrentSubtitle] = useState("Off");
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [centerAction, setCenterAction] = useState(null);
 
-  const film = films.find((f) => String(f.id) === String(id));
-  const videoUrl = film?.preview_url || "";
+  const videoUrl = film?.preview_url;
+  const filmTitle = film?.title || "No title";
+
+  const iconSize = isMobileDevice() ? 28 : 38;
+  const rangeWidthClass = isMobileDevice() ? "w-16" : "w-20";
+  const controlPadding = isMobileDevice() ? 6 : 10;
+
+  // Update time/progress
+  useEffect(() => {
+    if (!film || !videoRef.current) return;
+    const vid = videoRef.current;
+    const update = () => {
+      setDuration(vid.duration || 0);
+      setCurrentTime(vid.currentTime || 0);
+      setProgress(vid.duration ? (vid.currentTime / vid.duration) * 100 : 0);
+    };
+    vid.addEventListener("timeupdate", update);
+    vid.addEventListener("loadedmetadata", update);
+    return () => {
+      vid.removeEventListener("timeupdate", update);
+      vid.removeEventListener("loadedmetadata", update);
+    };
+  }, [film]);
+
+  // Sync volume & mute
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
+
+  // Auto-hide controls + cursor
+  useEffect(() => {
+    const show = () => {
+      setShowControls(true);
+      clearTimeout(controlsTimeout.current);
+      controlsTimeout.current = setTimeout(() => setShowControls(false), 2200);
+    };
+    window.addEventListener("mousemove", show);
+    window.addEventListener("touchstart", show);
+    show();
+    return () => {
+      clearTimeout(controlsTimeout.current);
+      window.removeEventListener("mousemove", show);
+      window.removeEventListener("touchstart", show);
+    };
+  }, []);
+
+  // Fullscreen listener
+  useEffect(() => {
+    const onfs = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
+    document.addEventListener("fullscreenchange", onfs);
+    return () => document.removeEventListener("fullscreenchange", onfs);
+  }, []);
 
   const fmt = (t) => {
+    if (!isFinite(t)) return "00:00";
     const h = Math.floor(t / 3600);
-    const m = Math.floor((t % 3600) / 60).toString().padStart(2, "0");
-    const s = Math.floor(t % 60).toString().padStart(2, "0");
+    const m = String(Math.floor((t % 3600) / 60)).padStart(2, "0");
+    const s = String(Math.floor(t % 60)).padStart(2, "0");
     return h ? `${h}:${m}:${s}` : `${m}:${s}`;
   };
 
-  useEffect(() => {
-    if (!loading && !film) {
-      console.error("Film INEXISTENT!", id, films.map((f) => f.id));
+  // Request fullscreen on container if available
+  const requestFullscreen = () => {
+    const el = containerRef.current;
+    if (el && el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {});
     }
-  }, [loading, film, id, films]);
+  };
 
-  useEffect(() => {
-    const video = videoRef.current;
-    const container = containerRef.current;
-    if (!video) return;
-
-    const onFullScreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === container);
-    };
-    document.addEventListener("fullscreenchange", onFullScreenChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullScreenChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const wasPlaying = !video.paused;
-    const time = video.currentTime;
-    video.src = videoUrl;
-    video.load();
-    video.currentTime = time;
-    if (wasPlaying) video.play();
-  }, [videoUrl]);
-
-  // --- LOGICĂ ASCUNDERE CONTROALE ca în codul anterior, cu mousemove + mouseleave ---
-  useEffect(() => {
-    let timeoutId;
-
-    function showControls() {
-      setShowControls(true);
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => setShowControls(false), 3000);
-    }
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.addEventListener("mousemove", showControls);
-    container.addEventListener("mouseleave", () => setShowControls(false));
-    container.addEventListener("touchstart", showControls);
-
-    // Arătăm controalele inițial
-    showControls();
-
-    return () => {
-      clearTimeout(timeoutId);
-      container.removeEventListener("mousemove", showControls);
-      container.removeEventListener("mouseleave", () => setShowControls(false));
-      container.removeEventListener("touchstart", showControls);
-    };
-  }, []);
-
-  if (loading)
-    return <div className="text-white p-10">Se încarcă filmele...</div>;
-  if (!film)
-    return (
-      <div className="text-white p-10">
-        <b>Film inexistent.</b>
-        <br />
-        <br />
-        <b>ID din URL:</b> {id}
-        <br />
-        <br />
-        <b>ID-uri disponibile în baza de date:</b>
-        <pre style={{ fontSize: 10, color: "#aaa", maxWidth: "100%" }}>
-          {JSON.stringify(films.map((f) => f.id), null, 2)}
-        </pre>
-      </div>
-    );
-
-  function togglePlay(e) {
+  const handlePlayPause = (e) => {
     e.stopPropagation();
-    const video = videoRef.current;
-    const container = containerRef.current;
-    if (video.paused) {
-      video.play();
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (vid.paused) {
+      // On mobile, request fullscreen on play
+      if (isMobileDevice()) requestFullscreen();
+      vid.play();
       setIsPlaying(true);
-      setOverlayIcon("play");
-      setShowOverlay(true);
-      setTimeout(() => setShowOverlay(false), 500);
-      if (!document.fullscreenElement && container.requestFullscreen)
-        container.requestFullscreen();
+      setCenterAction("play");
     } else {
-      video.pause();
+      vid.pause();
       setIsPlaying(false);
-      setOverlayIcon("pause");
-      setShowOverlay(true);
-      setTimeout(() => setShowOverlay(false), 500);
+      setCenterAction("pause");
     }
-  }
+    clearTimeout(centerTimeout.current);
+    centerTimeout.current = setTimeout(() => setCenterAction(null), 500);
+  };
 
-  function handleSkip(sec) {
-    videoRef.current.currentTime = Math.min(
-      Math.max(videoRef.current.currentTime + sec, 0),
-      duration
-    );
-  }
+  const handleSkip = (sec) => {
+    const vid = videoRef.current;
+    if (vid?.duration) vid.currentTime = Math.min(Math.max(vid.currentTime + sec, 0), vid.duration);
+  };
 
-  function toggleMute() {
-    const video = videoRef.current;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  }
+  const toggleMute = (e) => { e.stopPropagation(); setIsMuted((m) => !m); };
 
-  function handleVolume(e) {
-    const v = parseFloat(e.target.value);
-    videoRef.current.volume = v;
-    setVolume(v);
-    setIsMuted(v === 0);
-  }
-
-  function handleSeek(e) {
+  const toggleFullscreen = (e) => {
     e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = pos * duration;
-  }
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else if (!isMobileDevice()) {
+      // Only request fullscreen on desktop via button
+      requestFullscreen();
+    }
+  };
 
-  function toggleFullscreen() {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else containerRef.current.requestFullscreen();
-  }
+  const seek = (e) => {
+    const bar = seekBarRef.current; const vid = videoRef.current;
+    if (!bar || !vid || !duration) return;
+    const rect = bar.getBoundingClientRect();
+    const x = e.type.startsWith("touch") ? e.touches[0].clientX : e.clientX;
+    vid.currentTime = Math.max(0, Math.min(1, (x - rect.left) / rect.width)) * duration;
+  };
+  const startSeek = (e) => {
+    seek(e);
+    window.addEventListener("mousemove", seek);
+    window.addEventListener("mouseup", stopSeek);
+    window.addEventListener("touchmove", seek);
+    window.addEventListener("touchend", stopSeek);
+  };
+  const stopSeek = () => {
+    window.removeEventListener("mousemove", seek);
+    window.removeEventListener("mouseup", stopSeek);
+    window.removeEventListener("touchmove", seek);
+    window.removeEventListener("touchend", stopSeek);
+  };
 
-  const btnClasses =
-    "p-3 rounded-full hover:text-cyan-400 hover:scale-110 transform transition duration-150";
+  if (loading) return <div className="text-white p-8">Loading...</div>;
+  if (!film) return <div className="text-white p-8">Film inexistent</div>;
+
+  const mobilePortrait = isMobileDevice() && !isFullscreen;
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative w-full h-screen bg-black text-white ${
-        isFullscreen && !showControls ? "cursor-none" : "cursor-auto"
-      }`}
-      onClick={togglePlay}
-    >
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        autoPlay
-        onTimeUpdate={() => {
-          setCurrentTime(videoRef.current.currentTime);
-          setProgress(
-            (videoRef.current.currentTime / videoRef.current.duration) * 100
-          );
-        }}
-        onLoadedMetadata={() => setDuration(videoRef.current.duration)}
-      />
-
-      <AnimatePresence>
-        {showOverlay && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.3 }}
-          >
-            {overlayIcon === "play" ? (
-              <Play size={100} className="text-cyan-400" />
-            ) : (
-              <Pause size={100} className="text-cyan-400" />
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {showControls && (
-        <button
-          onClick={() => navigate(-1)}
-          className={`${btnClasses} absolute top-5 right-5 bg-black/50 hover:bg-black`}
-        >
-          <X size={28} />
-        </button>
-      )}
-
+    <div className="w-full bg-black select-none overflow-hidden">
       <div
-        className={`absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
-        }`}
-        onClick={(e) => e.stopPropagation()}
+        ref={containerRef}
+        className={mobilePortrait ? "relative w-full h-auto" : "relative w-full h-screen"}
+        onClick={handlePlayPause}
+        
       >
-        <div
-          className="h-1 w-full bg-gray-700 rounded cursor-pointer relative mb-4"
-          onClick={handleSeek}
-        >
-          <div className="h-full bg-red-600" style={{ width: `${progress}%` }} />
-          <div
-            className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${progress}%` }}
-          >
-            <div className="w-4 h-4 bg-red-600 rounded-full" />
-          </div>
-        </div>
+      >
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          className={mobilePortrait
+            ? "w-full h-auto object-contain"
+            : "absolute inset-0 w-full h-full object-cover"
+          }
+          autoPlay
+          muted={isMuted}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+        />
 
-        <div className="relative flex items-center">
-          <div className="flex items-center space-x-6">
-            <button onClick={() => handleSkip(-10)} className={btnClasses}>
-              <SkipBack size={28} />
-            </button>
-            <button onClick={togglePlay} className={btnClasses}>
-              {isPlaying ? <Pause size={36} /> : <Play size={36} />}
-            </button>
-            <button onClick={() => handleSkip(10)} className={btnClasses}>
-              <SkipForward size={28} />
-            </button>
-            <button onClick={toggleMute} className={btnClasses}>
-              <Volume2 size={28} />
-            </button>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={isMuted ? 0 : volume}
-              onChange={handleVolume}
-              className="hidden sm:block w-32"
-            />
-            <span className="text-sm hidden sm:block">
+        <AnimatePresence>
+          {centerAction && (
+            <motion.div
+              className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            >
+              {centerAction === 'play'
+                ? <Play size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
+                : <Pause size={mobilePortrait ? 100 : 140} className="text-cyan-400" />
+              }
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          className={
+            `absolute bottom-0 left-0 w-full z-20 transition-opacity duration-200 ` +
+            (showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')
+          }
+          style={{ padding: controlPadding }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end px-5 pb-1">
+            <span className="text-white font-mono text-sm">
               {fmt(currentTime)} / {fmt(duration)}
             </span>
           </div>
 
-          <div className="absolute inset-x-0 text-center pointer-events-none">
-            <span className="text-lg font-semibold truncate px-4">
-              {film.title}
-            </span>
+          <div
+            ref={seekBarRef}
+            className="mx-auto h-[4px] w-full bg-zinc-200 relative cursor-pointer mb-1"
+            onClick={seek}
+            onMouseDown={startSeek}
+            onTouchStart={startSeek}
+          >
+            <div
+              className="h-[4px] bg-cyan-400 absolute left-0 top-0 rounded-full"
+              style={{ width: `${progress}%` }}
+            />
+            <div
+              className="absolute top-1/2"
+              style={{ left: `calc(${progress}% - 6px)`, transform: 'translateY(-50%)' }}
+            >
+              <div className="w-3 h-3 rounded-full bg-white border-2 border-cyan-400" />
+            </div>
           </div>
 
-          <div className="ml-auto flex items-center space-x-6">
-            <button
-              onClick={() => setShowSubsOptions(!showSubsOptions)}
-              className={`${btnClasses} relative`}
-            >
-              <Subtitles size={28} />
-              {showSubsOptions && (
-                <div className="absolute bottom-10 right-0 bg-black/50 rounded p-2 space-y-1">
-                  {subtitles.map((sub) => (
-                    <div
-                      key={sub}
-                      onClick={() => setCurrentSubtitle(sub)}
-                      className="cursor-pointer hover:text-cyan-400"
-                    >
-                      {sub}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </button>
-            <button onClick={toggleFullscreen} className={btnClasses}>
-              {isFullscreen ? <Minimize2 size={28} /> : <Maximize2 size={28} />}
-            </button>
+          <div className="flex items-center justify-between px-5 pt-1">
+            <div className="flex items-center gap-3">
+              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(-10)}>
+                <RotateCcw size={iconSize - 4} />
+              </button>
+              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={handlePlayPause}>
+                {isPlaying
+                  ? <Pause size={iconSize} />
+                  : <Play size={iconSize} />
+                }
+              </button>
+              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={() => handleSkip(10)}>
+                <RotateCw size={iconSize - 4} />
+              </button>
+              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={toggleMute}>
+                {isMuted || volume === 0
+                  ? <VolumeX size={iconSize - 4} />
+                  : <Volume2 size={iconSize - 4} />
+                }
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={isMuted ? 0 : volume}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  if (videoRef.current) {
+                    videoRef.current.volume = v;
+                    videoRef.current.muted = v === 0;
+                  }
+                  setVolume(v);
+                  setIsMuted(v === 0);
+                }}
+                className={`${rangeWidthClass} accent-cyan-400`}
+              />
+            </div>
+
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+              <span className="text-white text-sm font-semibold">{filmTitle}</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button className="p-1 text-white hover:bg-white/10 rounded-full" onClick={toggleFullscreen}>
+                {isFullscreen
+                  ? <Minimize2 size={iconSize - 2} />
+                  : <Maximize2 size={iconSize - 2} />
+                }
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default WatchPage;
