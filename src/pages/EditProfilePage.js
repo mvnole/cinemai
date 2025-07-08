@@ -17,7 +17,7 @@ function EditProfilePage() {
       const { data } = await supabase
         .from("profiles")
         .select("username, avatar_url")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
       if (data) {
@@ -34,7 +34,7 @@ function EditProfilePage() {
     const { error } = await supabase
       .from("profiles")
       .update({ username, avatar_url: avatarUrl })
-      .eq("user_id", user.id);
+      .eq("id", user.id);
 
     if (error) {
       setMessage({ type: "error", text: "Eroare la salvare: " + error.message });

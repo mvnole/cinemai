@@ -1,40 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Home, Film, Tv, User, LogOut, Menu, Settings, Pencil } from "lucide-react";
+import { Search, Home, Film, Tv, User, Menu } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { motion, AnimatePresence } from "framer-motion";
+import UserDropdown from "./UserDropdown"; // presupun că ai componenta asta deja
+import { AnimatePresence, motion } from "framer-motion";
 
-function Header({ showUsers, setShowUsers, userMenuRef }) {
-  const { user, logout } = useUser();
+function Header() {
+  const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const dropdownRef = useRef(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showUsers, setShowUsers] = useState(false);
+
+  const userMenuRef = useRef(null);
 
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    logout();
+  useEffect(() => {
     setShowUsers(false);
     setShowMobileMenu(false);
-    navigate("/register");
-  };
-
-  useEffect(() => {
-    setShowUsers(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)
-        && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowUsers(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setShowUsers, userMenuRef]);
 
   return (
     <header className="w-full bg-[#18181b] md:bg-black/30 md:backdrop-blur-md px-3 py-2 sm:px-4 sm:py-4 flex items-center justify-between fixed top-0 left-0 right-0 z-[100] border-b border-zinc-800 shadow-none">
@@ -55,16 +41,36 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
           <span className="text-cyan-400">AI</span>
         </Link>
         <nav className="hidden md:flex items-center gap-4 sm:gap-6 text-white text-base font-medium">
-          <Link to="/" className={`flex items-center gap-2 px-2 py-1 ${isActive("/") ? "text-cyan-400" : "hover:text-cyan-400"}`}>
+          <Link
+            to="/"
+            className={`flex items-center gap-2 px-2 py-1 ${
+              isActive("/") ? "text-cyan-400" : "hover:text-cyan-400"
+            }`}
+          >
             <Home size={20} /> Home
           </Link>
-          <Link to="/search" className={`flex items-center gap-2 px-2 py-1 ${isActive("/search") ? "text-cyan-400" : "hover:text-cyan-400"}`}>
+          <Link
+            to="/search"
+            className={`flex items-center gap-2 px-2 py-1 ${
+              isActive("/search") ? "text-cyan-400" : "hover:text-cyan-400"
+            }`}
+          >
             <Search size={20} /> Search
           </Link>
-          <Link to="/films" className={`flex items-center gap-2 px-2 py-1 ${isActive("/films") ? "text-cyan-400" : "hover:text-cyan-400"}`}>
+          <Link
+            to="/films"
+            className={`flex items-center gap-2 px-2 py-1 ${
+              isActive("/films") ? "text-cyan-400" : "hover:text-cyan-400"
+            }`}
+          >
             <Film size={20} /> Films
           </Link>
-          <Link to="/series" className={`flex items-center gap-2 px-2 py-1 ${isActive("/series") ? "text-cyan-400" : "hover:text-cyan-400"}`}>
+          <Link
+            to="/series"
+            className={`flex items-center gap-2 px-2 py-1 ${
+              isActive("/series") ? "text-cyan-400" : "hover:text-cyan-400"
+            }`}
+          >
             <Tv size={20} /> Series
           </Link>
         </nav>
@@ -85,77 +91,11 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
             <User size={18} /> Profil
           </button>
 
-          {/* USER MENU DROPDOWN CU AERO BLUR */}
-          <AnimatePresence>
-            {showUsers && (
-              <motion.div
-                ref={dropdownRef}
-                className="absolute right-0 mt-2 w-56 rounded-xl shadow-2xl border border-white/10 z-[9999] overflow-hidden bg-black/60 backdrop-blur-md"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <ul className="divide-y divide-zinc-700">
-                  {user && (
-                    <li>
-                      <div className="px-4 py-2 text-zinc-100">
-                        Autentificat ca {user.user_metadata?.username || user.email}
-                      </div>
-                    </li>
-                  )}
-                </ul>
-                <div className="px-4 py-2 border-t border-zinc-700">
-                  {user ? (
-                    <>
-                      <button
-                        onClick={() => {
-                          setShowUsers(false);
-                          navigate("/manage-profiles");
-                        }}
-                        className="flex items-center gap-2 text-sm text-yellow-300 hover:text-yellow-200 mb-2"
-                      >
-                        <Pencil size={16} /> Manage Profiles
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowUsers(false);
-                          navigate("/settings");
-                        }}
-                        className="flex items-center gap-2 text-sm text-blue-300 hover:text-blue-200 mb-2"
-                      >
-                        <Settings size={16} /> Settings
-                      </button>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 text-sm text-red-300 hover:text-red-200"
-                      >
-                        <LogOut size={16} /> Log Out
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setShowUsers(false);
-                          navigate("/settings");
-                        }}
-                        className="flex items-center gap-2 text-sm text-blue-300 hover:text-blue-200 mb-2"
-                      >
-                        <Settings size={16} /> Settings
-                      </button>
-                      <Link
-                        to="/register"
-                        onClick={() => setShowUsers(false)}
-                        className="flex items-center gap-2 text-sm text-green-300 hover:text-green-200"
-                      >
-                        <User size={16} /> Register
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <UserDropdown
+            showUsers={showUsers}
+            setShowUsers={setShowUsers}
+            userMenuRef={userMenuRef}
+          />
         </div>
       </div>
 
@@ -180,7 +120,7 @@ function Header({ showUsers, setShowUsers, userMenuRef }) {
               <Home size={20} /> Home
             </Link>
             <Link to="/films" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
-              <Film size={20} /> Movies
+              <Film size={20} /> Films
             </Link>
             <Link to="/series" className="flex items-center gap-2 py-2 text-lg hover:text-cyan-100" onClick={() => setShowMobileMenu(false)}>
               <Tv size={20} /> Series

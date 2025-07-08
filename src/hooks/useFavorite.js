@@ -16,7 +16,7 @@ export function useFavorite(filmId, userId) {
         .from("favorites")
         .select("id")
         .eq("film_id", filmId)
-        .eq("user_id", userId)
+        .eq("", userId)
         .maybeSingle();
       if (!active) return;
       if (data) {

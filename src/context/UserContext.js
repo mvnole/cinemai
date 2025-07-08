@@ -1,8 +1,13 @@
 // context/UserContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { upsertProfile } from "../utils/upsertProfile"; // <-- DOAR importul!
 
 const UserContext = createContext();
+
+function isEmail(value) {
+  return /\S+@\S+\.\S+/.test(value);
+}
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -37,7 +42,6 @@ export function UserProvider({ children }) {
   useEffect(() => {
     if (!user?.id) return;
     async function checkGdpr() {
-      // Caută în profiles dacă are acceptat privacy/terms
       const { data: profile } = await supabase
         .from("profiles")
         .select("accepted_privacy, accepted_terms")
@@ -53,6 +57,14 @@ export function UserProvider({ children }) {
     checkGdpr();
   }, [user]);
 
+  // Asigură-te că userul există în profiles la orice login/refresh
+  useEffect(() => {
+    if (user?.id) {
+      console.log("UserContext: upsertProfile triggered for", user);
+      upsertProfile(user);
+    }
+  }, [user]);
+
   // Funcție pentru accept GDPR (privacy + terms)
   const acceptGdpr = async () => {
     if (!user?.id) return;
@@ -66,8 +78,28 @@ export function UserProvider({ children }) {
     setNeedsGdpr(false);
   };
 
-  const login = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  // Login modificat să accepte și username sau email
+  const login = async (emailOrUsername, password) => {
+    let email = emailOrUsername;
+
+    if (!isEmail(emailOrUsername)) {
+      // caută email după username
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("username", emailOrUsername)
+        .single();
+
+      if (error || !data) {
+        throw new Error("Username not found");
+      }
+      email = data.email;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) throw error;
   };
 
@@ -91,8 +123,8 @@ export function UserProvider({ children }) {
           accepted_terms: true,
           accepted_terms_at: now,
         },
-        emailRedirectTo: redirectTo
-      }
+        emailRedirectTo: redirectTo,
+      },
     });
     if (error) throw error;
   };

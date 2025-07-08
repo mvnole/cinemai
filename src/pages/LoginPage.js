@@ -20,9 +20,11 @@ function Input({ icon, ...props }) {
 }
 
 function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [resetRequested, setResetRequested] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
   const navigate = useNavigate();
   const { login } = useUser();
 
@@ -37,12 +39,25 @@ function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!emailOrUsername || !password) {
       alert("Complete all fields.");
       return;
     }
+
     try {
-      await login(email, password);
+      // Folosim emailOrUsername direct, fie email, fie username
+      // Dacă vrei să faci un lookup username->email, trebuie alt backend logic
+      await login(emailOrUsername, password);
+
+      if (!rememberMe) {
+        // Mută sesiunea în sessionStorage ca să expire la închiderea tabului
+        const session = localStorage.getItem("supabase.auth.token");
+        if (session) {
+          sessionStorage.setItem("supabase.auth.token", session);
+          localStorage.removeItem("supabase.auth.token");
+        }
+      }
+      
       navigate("/");
     } catch (err) {
       alert("Login error: " + err.message);
@@ -50,13 +65,13 @@ function LoginPage() {
   };
 
   const handlePasswordReset = async () => {
-    if (!email) {
+    if (!emailOrUsername) {
       alert("Enter your email for reset.");
       return;
     }
     try {
       const { supabase } = await import("../utils/supabaseClient");
-      await supabase.auth.resetPasswordForEmail(email, {
+      await supabase.auth.resetPasswordForEmail(emailOrUsername, {
         redirectTo: window.location.origin + "/reset-password",
       });
       setResetRequested(true);
@@ -75,7 +90,6 @@ function LoginPage() {
           className="w-full h-full object-cover object-center"
           style={{ filter: "brightness(0.7) blur(0.5px)" }}
         />
-        {/* Overlay pentru contrast */}
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
@@ -85,11 +99,10 @@ function LoginPage() {
         style={{
           background:
             "linear-gradient(120deg,rgba(18,24,36,0.32) 70%,rgba(39,200,245,0.08) 100%)",
-          boxShadow:
-            "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
+          boxShadow: "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
           border: "1px solid rgba(34,211,238,0.13)",
           backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)"
+          WebkitBackdropFilter: "blur(16px)",
         }}
       >
         <img
@@ -107,18 +120,28 @@ function LoginPage() {
         <form onSubmit={handleLogin} className="w-full space-y-4">
           <Input
             icon={<FaEnvelope />}
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            type="text"
+            placeholder="Email or Username"
+            value={emailOrUsername}
+            onChange={(e) => setEmailOrUsername(e.target.value)}
           />
           <Input
             icon={<FaLock />}
             type="password"
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
+
+          <label className="flex items-center gap-2 text-sm text-gray-300 select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded"
+            />
+            Remember me
+          </label>
 
           <motion.button
             type="submit"
@@ -138,12 +161,16 @@ function LoginPage() {
           Forgot password?
         </button>
         {resetRequested && (
-          <p className="text-green-400 text-sm mt-2">Reset email sent. Check your inbox.</p>
+          <p className="text-green-400 text-sm mt-2">
+            Reset email sent. Check your inbox.
+          </p>
         )}
 
         <p className="mt-8 text-center text-sm text-zinc-300">
           Don't have an account?{" "}
-          <a href="/register" className="text-cyan-300 hover:underline">Register</a>
+          <a href="/register" className="text-cyan-300 hover:underline">
+            Register
+          </a>
         </p>
       </div>
     </div>

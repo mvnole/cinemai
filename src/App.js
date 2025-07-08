@@ -6,7 +6,6 @@ import EditProfilePage from "./pages/EditProfilePage";
 import HomePage from "./pages/HomePage";
 import ManageProfilesPage from "./pages/ManageProfilesPage";
 import SearchPage from "./pages/SearchPage";
-import { FilmPage } from "./pages/FilmPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import WatchPage from "./pages/WatchPage";
 import { SettingsPage } from "./components/SettingsPage";
@@ -21,7 +20,7 @@ import LoginPage from "./pages/LoginPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import { supabase } from "./utils/supabaseClient";
-
+window.supabase = supabase;
 // Banner cookies (cu update pentru userii vechi logați)
 function CookieConsentBanner() {
   const { user } = useUser();
@@ -34,7 +33,7 @@ function CookieConsentBanner() {
         const { data: profile } = await supabase
           .from("profiles")
           .select("accepted_privacy, accepted_terms")
-          .eq("user_id", user.id) // <-- aici schimbi dacă coloana ta e user_id
+          .eq("id", user.id) // <-- aici schimbi dacă coloana ta e user_id
           .single();
         if (!profile?.accepted_privacy || !profile?.accepted_terms) {
           setVisible(true);
@@ -65,7 +64,7 @@ function CookieConsentBanner() {
         full_name: user.user_metadata?.fullName || undefined,
         gender: user.user_metadata?.gender || undefined,
         birth_date: user.user_metadata?.birthDate || undefined,
-      }).eq("user_id", user.id);
+      }).eq("id", user.id);
     }
     setVisible(false);
   };
@@ -191,7 +190,7 @@ function App() {
                   path="/film/:id"
                   element={
                     <OutsideClickWrapper redirectTo={location.state?.fromSearch ? "/search" : "/"}>
-                      <FilmPage />
+
                     </OutsideClickWrapper>
                   }
                 />

@@ -16,7 +16,7 @@ function ManageProfilesPage() {
       const { data, error } = await supabase
         .from("profiles")
         .select("username, avatar_url")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
       if (error) {
