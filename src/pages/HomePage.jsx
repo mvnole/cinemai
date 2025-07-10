@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Section from "../components/Section";
 import HeroBanner from "../components/HeroBanner";
 import TopFive from "../components/TopFive";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useFilms } from "../hooks/useFilms";
 import { useUserFavorites } from "../hooks/useFavorite";
 import { useUser } from "../context/UserContext";
@@ -23,10 +23,19 @@ function filterByGenre(films, genre) {
 
 function HomePage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { films, loading } = useFilms();
   const { user } = useUser();
   const { favorites = [], loading: favLoading } = useUserFavorites(user?.id);
   const { progressList, loading: progressLoading } = useUserProgress(user?.id);
+
+  // --------- REDIRECT LOGIC FOR SUPABASE RESET PASSWORD FLOW -----------
+  useEffect(() => {
+    if (window.location.hash && window.location.hash.includes("access_token")) {
+      navigate("/reset-password" + window.location.hash);
+    }
+  }, []);
+  // ----------------------------------------------------------------------
 
   if (loading || favLoading || progressLoading)
     return <div className="text-center py-12">Loading...</div>;

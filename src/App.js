@@ -20,7 +20,9 @@ import LoginPage from "./pages/LoginPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import { supabase } from "./utils/supabaseClient";
-window.supabase = supabase;
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+
 // Banner cookies (cu update pentru userii vechi logați)
 function CookieConsentBanner() {
   const { user } = useUser();
@@ -178,13 +180,13 @@ function App() {
             <Routes location={state?.modal ? state.backgroundLocation || location : location}>
               <Route path="/" element={<HomePage />} />
               <Route path="/manage-profiles" element={<ManageProfilesPage />} />
-              <Route path="/movies" element={<h2 className="text-xl">Movies Page (în lucru)</h2>} />
               <Route path="/watch/:id" element={<WatchPage />} />
               <Route path="/tv-shows" element={<h2 className="text-xl">TV Shows Page (în lucru)</h2>} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/films" element={<FilmsPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               {!state?.modal && (
                 <Route
                   path="/film/:id"
@@ -202,6 +204,8 @@ function App() {
               <Route path="/edit-profile" element={<EditProfilePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+               
             </Routes>
           </motion.div>
         </AnimatePresence>

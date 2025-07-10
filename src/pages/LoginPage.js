@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -22,7 +22,6 @@ function Input({ icon, ...props }) {
 function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [resetRequested, setResetRequested] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
   const navigate = useNavigate();
@@ -45,38 +44,18 @@ function LoginPage() {
     }
 
     try {
-      // Folosim emailOrUsername direct, fie email, fie username
-      // Dacă vrei să faci un lookup username->email, trebuie alt backend logic
       await login(emailOrUsername, password);
 
       if (!rememberMe) {
-        // Mută sesiunea în sessionStorage ca să expire la închiderea tabului
         const session = localStorage.getItem("supabase.auth.token");
         if (session) {
           sessionStorage.setItem("supabase.auth.token", session);
           localStorage.removeItem("supabase.auth.token");
         }
       }
-      
       navigate("/");
     } catch (err) {
       alert("Login error: " + err.message);
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    if (!emailOrUsername) {
-      alert("Enter your email for reset.");
-      return;
-    }
-    try {
-      const { supabase } = await import("../utils/supabaseClient");
-      await supabase.auth.resetPasswordForEmail(emailOrUsername, {
-        redirectTo: window.location.origin + "/reset-password",
-      });
-      setResetRequested(true);
-    } catch (error) {
-      alert("Password reset error: " + error.message);
     }
   };
 
@@ -153,24 +132,18 @@ function LoginPage() {
           </motion.button>
         </form>
 
-        <button
-          type="button"
-          onClick={handlePasswordReset}
+        <Link
+          to="/forgot-password"
           className="text-sm text-cyan-300 hover:underline mt-4 transition"
         >
           Forgot password?
-        </button>
-        {resetRequested && (
-          <p className="text-green-400 text-sm mt-2">
-            Reset email sent. Check your inbox.
-          </p>
-        )}
+        </Link>
 
         <p className="mt-8 text-center text-sm text-zinc-300">
           Don't have an account?{" "}
-          <a href="/register" className="text-cyan-300 hover:underline">
+          <Link to="/register" className="text-cyan-300 hover:underline">
             Register
-          </a>
+          </Link>
         </p>
       </div>
     </div>

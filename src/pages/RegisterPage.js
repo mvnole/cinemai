@@ -124,7 +124,6 @@ function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Inserare profile după confirmarea userului (opțional, doar dacă vrei)
   useEffect(() => {
     if (!user?.id) return;
     const addProfile = async () => {
@@ -248,85 +247,96 @@ function RegisterPage() {
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
+      {/* CARD SPLIT: orizontal pe desktop, vertical pe mobil */}
       <div
-        className="relative z-10 w-full max-w-lg
-    bg-white/10 backdrop-blur-2xl
-    border border-cyan-300/20
-    rounded-3xl shadow-xl p-10 flex flex-col items-center"
+        className="
+          relative z-10 w-full max-w-[1100px]
+          flex flex-col md:flex-row
+          bg-white/10 backdrop-blur-2xl
+          border border-cyan-300/20
+          rounded-3xl shadow-xl p-0 md:p-0 overflow-hidden items-stretch
+        "
         style={{
-          background:
-            "linear-gradient(120deg,rgba(18,24,36,0.32) 70%,rgba(39,200,245,0.08) 100%)",
-          boxShadow:
-            "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
+          background: "linear-gradient(120deg,rgba(18,24,36,0.32) 70%,rgba(39,200,245,0.08) 100%)",
+          boxShadow: "0 6px 36px 0 #0006, 0 1.5px 8px 0 #0ff2",
           border: "1px solid rgba(34,211,238,0.13)"
         }}
       >
-        {/* Logo + tagline */}
-        <img
-          src="/logo-cinemai.png"
-          alt="CinemAI Logo"
-          className="w-20 h-20 mb-3 drop-shadow-xl rounded-full border-2 border-cyan-400 bg-white/10"
-        />
-        <div className="text-cyan-300 font-bold text-xl mb-1 tracking-wide text-center">Unlock the Future of Film</div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-6 text-center drop-shadow-cyan">
-          Create your CinemAI Account
-        </h1>
-        <form className="space-y-4 w-full" onSubmit={handleSubmit} autoComplete="off">
-          <Input icon={<FaUser />} name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Full Name" />
-          <Input icon={<FaUser />} name="username" value={formData.username} onChange={handleChange} placeholder="Username" />
-          <Input icon={<FaEnvelope />} type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" />
-          <Input icon={<FaLock />} type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" />
-          <Input icon={<FaLock />} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
-          <DateInput value={formData.birthDate} onChange={e => setFormData(f => ({ ...f, birthDate: e.target.value }))} />
-          <GenderDropdown value={formData.gender} setValue={v => setFormData(f => ({ ...f, gender: v }))} />
+        {/* Left: imagine de fundal, doar pe desktop */}
+        <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-zinc-900/80 p-0">
+          <img
+            src="/backgrounds/background-register.png"
+            alt="CinemAI Register Background"
+            className="w-full h-full object-cover object-left rounded-l-3xl"
+            style={{
+              minHeight: "384px",
+              maxHeight: "790px"
+            }}
+          />
+        </div>
 
-          {/* Checkbox Privacy Policy */}
-          <div className="flex items-center gap-2 mt-2">
-            <input
-              id="privacy"
-              type="checkbox"
-              checked={acceptedPrivacy}
-              onChange={e => setAcceptedPrivacy(e.target.checked)}
-              className="accent-cyan-400 w-4 h-4"
-              required
-            />
-            <label htmlFor="privacy" className="text-sm text-zinc-200">
-              I accept the{" "}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Privacy Policy</a>
-            </label>
-          </div>
-          {/* Checkbox Terms & Conditions */}
-          <div className="flex items-center gap-2 -mt-2">
-            <input
-              id="terms"
-              type="checkbox"
-              checked={acceptedTerms}
-              onChange={e => setAcceptedTerms(e.target.checked)}
-              className="accent-cyan-400 w-4 h-4"
-              required
-            />
-            <label htmlFor="terms" className="text-sm text-zinc-200">
-              I accept the{" "}
-              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Terms & Conditions</a>
-            </label>
-          </div>
+        {/* Right: formularul */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-10 bg-transparent">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-6 text-center drop-shadow-cyan">
+            Create your CinemAI Account
+          </h1>
+          <form className="space-y-4 w-full" onSubmit={handleSubmit} autoComplete="off">
+            <Input icon={<FaUser />} name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Full Name" />
+            <Input icon={<FaUser />} name="username" value={formData.username} onChange={handleChange} placeholder="Username" />
+            <Input icon={<FaEnvelope />} type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" />
+            <Input icon={<FaLock />} type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" />
+            <Input icon={<FaLock />} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" />
+            <DateInput value={formData.birthDate} onChange={e => setFormData(f => ({ ...f, birthDate: e.target.value }))} />
+            <GenderDropdown value={formData.gender} setValue={v => setFormData(f => ({ ...f, gender: v }))} />
 
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileHover={{ scale: 1.04, boxShadow: "0 0 24px #0ff9" }}
-            whileTap={{ scale: 0.98 }}
-            className={`w-full mt-2 py-2 px-4 rounded-xl font-bold text-lg transition focus:outline-none shadow-cyan-400/30 shadow
-            ${loading ? "bg-cyan-800 cursor-not-allowed opacity-70" : "bg-cyan-500 hover:bg-cyan-400 focus:ring-2 focus:ring-cyan-400/40 active:bg-cyan-600"}
-            `}
-          >
-            {loading ? "Creating Account..." : "Register"}
-          </motion.button>
-        </form>
-        <p className="mt-4 text-center text-sm text-zinc-300">
-          Already have an account?{" "}
-          <a href="/login" className="text-cyan-300 hover:underline">Sign in</a>
-        </p>
+            {/* Checkbox Privacy Policy */}
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                id="privacy"
+                type="checkbox"
+                checked={acceptedPrivacy}
+                onChange={e => setAcceptedPrivacy(e.target.checked)}
+                className="accent-cyan-400 w-4 h-4"
+                required
+              />
+              <label htmlFor="privacy" className="text-sm text-zinc-200">
+                I accept the{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Privacy Policy</a>
+              </label>
+            </div>
+            {/* Checkbox Terms & Conditions */}
+            <div className="flex items-center gap-2 -mt-2">
+              <input
+                id="terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={e => setAcceptedTerms(e.target.checked)}
+                className="accent-cyan-400 w-4 h-4"
+                required
+              />
+              <label htmlFor="terms" className="text-sm text-zinc-200">
+                I accept the{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline text-cyan-300 hover:text-cyan-400">Terms & Conditions</a>
+              </label>
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={loading}
+              whileHover={{ scale: 1.04, boxShadow: "0 0 24px #0ff9" }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full mt-2 py-2 px-4 rounded-xl font-bold text-lg transition focus:outline-none shadow-cyan-400/30 shadow
+              ${loading ? "bg-cyan-800 cursor-not-allowed opacity-70" : "bg-cyan-500 hover:bg-cyan-400 focus:ring-2 focus:ring-cyan-400/40 active:bg-cyan-600"}
+              `}
+            >
+              {loading ? "Creating Account..." : "Register"}
+            </motion.button>
+          </form>
+          <p className="mt-4 text-center text-sm text-zinc-300">
+            Already have an account?{" "}
+            <a href="/login" className="text-cyan-300 hover:underline">Sign in</a>
+          </p>
+        </div>
       </div>
     </div>
   );
