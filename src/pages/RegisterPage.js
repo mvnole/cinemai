@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { supabase } from "../utils/supabaseClient";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -109,7 +108,7 @@ function Input({ icon, ...props }) {
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const { register, user } = useUser();
+  const { register } = useUser();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -125,57 +124,12 @@ function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user?.id) return;
-    const addProfile = async () => {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-      if (prof) return;
-      const meta = user.user_metadata || {};
-      const now = new Date().toISOString();
-      await supabase.from("profiles").insert({
-        id: user.id,
-        email: user.email,
-        username: meta.username || "",
-        full_name: meta.fullName || "",
-        birth_date: meta.birthDate || "",
-        gender: meta.gender || "",
-        accepted_privacy: true,
-        accepted_privacy_at: now,
-        accepted_terms: true,
-        accepted_terms_at: now,
-      });
-    };
-    addProfile();
-  }, [user]);
-
-  useEffect(() => {
     const header = document.querySelector("header");
     if (header) header.style.display = "none";
     return () => {
       if (header) header.style.display = "";
     };
   }, []);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session && data.session.user.confirmed_at) {
-        navigate("/subscription");
-      }
-    };
-    checkSession();
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.confirmed_at) {
-        navigate("/subscription");
-      }
-    });
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -217,9 +171,9 @@ function RegisterPage() {
     try {
       setLoading(true);
       await register(email, password, {
-        fullName,
+        full_name: fullName,
         username,
-        birthDate,
+        birth_date: birthDate,
         gender,
         accepted_privacy: true,
         accepted_privacy_at: new Date().toISOString(),
@@ -227,6 +181,8 @@ function RegisterPage() {
         accepted_terms_at: new Date().toISOString(),
       });
       alert("Account created! Check your email for confirmation.");
+      // Optional: navighezi automat spre login sau subscription page
+      // navigate("/login");
     } catch (error) {
       alert("Registration error: " + error.message);
     } finally {

@@ -46,6 +46,7 @@ function LoginPage() {
     try {
       await login(emailOrUsername, password);
 
+      // Optional: RememberMe logic pentru Supabase (doar dacă vrei strict tokenul să nu fie în localStorage)
       if (!rememberMe) {
         const session = localStorage.getItem("supabase.auth.token");
         if (session) {
@@ -53,9 +54,10 @@ function LoginPage() {
           localStorage.removeItem("supabase.auth.token");
         }
       }
+
       navigate("/");
     } catch (err) {
-      alert("Login error: " + err.message);
+      alert("Login error: " + (err.message || "Invalid credentials."));
     }
   };
 

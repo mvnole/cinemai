@@ -1,14 +1,13 @@
-// src/hooks/useFavorite.js
 import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 
 // HOOK pentru UN singur film (FilmCard)
-export function useFavorite(filmId, userId) {
+export function useFavorite(filmId, profileId) { // profileId, nu userId!
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
 
   useEffect(() => {
-    if (!filmId || !userId) return;
+    if (!filmId || !profileId) return;
     let active = true;
 
     async function checkFavorite() {
@@ -16,7 +15,7 @@ export function useFavorite(filmId, userId) {
         .from("favorites")
         .select("id")
         .eq("film_id", filmId)
-        .eq("", userId)
+        .eq("user_id", profileId) // <-- corect
         .maybeSingle();
       if (!active) return;
       if (data) {
@@ -29,12 +28,12 @@ export function useFavorite(filmId, userId) {
     }
     checkFavorite();
     return () => { active = false };
-  }, [filmId, userId]);
+  }, [filmId, profileId]);
 
   const addFavorite = async () => {
     const { data } = await supabase
       .from("favorites")
-      .insert([{ film_id: filmId, user_id: userId }])
+      .insert([{ film_id: filmId, user_id: profileId }]) // <-- corect
       .select("id")
       .maybeSingle();
     if (data) {
@@ -56,13 +55,13 @@ export function useFavorite(filmId, userId) {
   return { isFavorite, addFavorite, removeFavorite };
 }
 
-// HOOK global pentru TOATE favoritele userului (Homepage, My List etc)
-export function useUserFavorites(userId) {
+// HOOK global pentru TOATE favoritele profilului activ (Homepage, My List etc)
+export function useUserFavorites(profileId) {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!userId) {
+    if (!profileId) {
       setFavorites([]);
       return;
     }
@@ -70,12 +69,12 @@ export function useUserFavorites(userId) {
     supabase
       .from("favorites")
       .select("film_id")
-      .eq("user_id", userId)
+      .eq("user_id", profileId)
       .then(({ data }) => {
         setFavorites(data ? data.map(row => row.film_id) : []);
         setLoading(false);
       });
-  }, [userId]);
+  }, [profileId]);
 
   return { favorites, loading };
 }

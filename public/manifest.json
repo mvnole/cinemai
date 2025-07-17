@@ -1,0 +1,8 @@
+{
+  "name": "CinemAI",
+  "short_name": "CinemAI",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#000",
+  "theme_color": "#00c3ff"
+}

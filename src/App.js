@@ -33,10 +33,10 @@ function CookieConsentBanner() {
       if (user?.id) {
         // ATENȚIE: folosește user_id sau id după cum ai coloana în profiles
         const { data: profile } = await supabase
-          .from("profiles")
-          .select("accepted_privacy, accepted_terms")
-          .eq("id", user.id) // <-- aici schimbi dacă coloana ta e user_id
-          .single();
+          .from("accounts")
+  .select("accepted_privacy, accepted_terms")
+  .eq("id", user.id)
+  .maybeSingle();
         if (!profile?.accepted_privacy || !profile?.accepted_terms) {
           setVisible(true);
         } else {
@@ -106,7 +106,6 @@ function CookieConsentBanner() {
   );
 }
 
-
 function App() {
   const [showUsers, setShowUsers] = useState(false);
   const mobileUserRef = useRef();
@@ -114,6 +113,21 @@ function App() {
   const navigate = useNavigate();
   const state = location.state;
   const { loading, user } = useUser();
+
+  // ---------------- Draperii cinema ------------------
+  const [curtainsOpen, setCurtainsOpen] = useState(false);
+  const [showCurtains, setShowCurtains] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === "/" && state?.fromManageProfiles) {
+      setShowCurtains(true);
+      setCurtainsOpen(false);
+      setTimeout(() => setCurtainsOpen(true), 80);
+      setTimeout(() => setShowCurtains(false), 900);
+      navigate("/", { replace: true, state: {} });
+    }
+  }, [location.pathname, state]);
+  // ----------------------------------------------------
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -149,20 +163,35 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white relative overflow-x-hidden">
-      {/* HEADER: fixed z-[100] */}
       <Header
         showUsers={showUsers}
         setShowUsers={setShowUsers}
         userMenuRef={mobileUserRef}
       />
 
-      {/* Spacer pentru header fix */}
+      {showCurtains && (
+        <>
+          <motion.div
+            initial={{ left: 0 }}
+            animate={curtainsOpen ? { left: "-51%" } : { left: 0 }}
+            transition={{ duration: 0.8, ease: [0.7, 0, 0.3, 1] }}
+            className="fixed top-0 left-0 w-1/2 h-screen bg-gradient-to-br from-[#0d2230] via-[#08243c] to-[#0a1a25] z-[9999] pointer-events-none"
+            style={{ borderRight: "3px solid #00bcd4", boxShadow: "6px 0 24px 0 #0af6" }}
+          />
+          <motion.div
+            initial={{ right: 0 }}
+            animate={curtainsOpen ? { right: "-51%" } : { right: 0 }}
+            transition={{ duration: 0.8, ease: [0.7, 0, 0.3, 1] }}
+            className="fixed top-0 right-0 w-1/2 h-screen bg-gradient-to-bl from-[#0d2230] via-[#08243c] to-[#0a1a25] z-[9999] pointer-events-none"
+            style={{ borderLeft: "3px solid #00bcd4", boxShadow: "-6px 0 24px 0 #0af6" }}
+          />
+        </>
+      )}
+
       <div className="pt-16" />
 
-      {/* Banner cookie GDPR */}
       <CookieConsentBanner />
 
-      {/* Fundal bokeh/gradient */}
       <div className="pointer-events-none fixed z-0 inset-0">
         <div className="absolute w-96 h-96 bg-cyan-400 opacity-20 blur-3xl rounded-full left-[-6rem] top-[-4rem]"></div>
         <div className="absolute w-72 h-72 bg-violet-500 opacity-10 blur-2xl rounded-full right-[-3rem] top-[60%]"></div>
@@ -187,31 +216,31 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/edit-profile/:id" element={<EditProfilePage />} />
+              {/* Doar UNA dintre rutele /edit-profile (păstrează doar cu id dacă folosești id) */}
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/user/:id" element={<UserPage />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              {/* Film page modal pe route direct */}
               {!state?.modal && (
                 <Route
                   path="/film/:id"
                   element={
                     <OutsideClickWrapper redirectTo={location.state?.fromSearch ? "/search" : "/"}>
-
+                      <FilmPageModal />
                     </OutsideClickWrapper>
                   }
                 />
               )}
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/user/:id" element={<UserPage />} />
-              <Route path="/subscription" element={<SubscriptionPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/edit-profile" element={<EditProfilePage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-               
             </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Modal film (peste tot) */}
+      {/* Modal film (peste tot, DOAR ca modal) */}
       <AnimatePresence>
         {state?.modal && (
           <Routes>

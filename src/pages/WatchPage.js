@@ -13,10 +13,9 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { updateUserProgress } from "../utils/userProgress";
+import { updateProfileProgress } from "../utils/userProgress";
 import { supabase } from "../utils/supabaseClient";
 
-// Detect mobile devices
 const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
 
 export default function WatchPage() {
@@ -24,7 +23,8 @@ export default function WatchPage() {
   const { films, loading } = useFilms();
   const film = films.find((f) => String(f.id) === String(id));
 
-  const { user } = useUser();
+  // Important: activeProfile din context!
+  const { user, activeProfile } = useUser();
 
   const containerRef = useRef();
   const videoRef = useRef();
@@ -50,18 +50,17 @@ export default function WatchPage() {
   const rangeWidthClass = isMobileDevice() ? "w-16" : "w-20";
   const controlPadding = isMobileDevice() ? 6 : 10;
 
-  // === FETCH progres și setează la load ===
+  // === FETCH progres și setează la load (!!! per profil activ) ===
   useEffect(() => {
     async function fetchLastProgress() {
-      if (!user?.id || !film?.id || !videoRef.current) return;
+      if (!activeProfile?.id || !film?.id || !videoRef.current) return;
       const { data, error } = await supabase
         .from("user_progress")
         .select("last_position")
-        .eq("user_id", user.id)
+        .eq("profile_id", activeProfile.id)
         .eq("film_id", film.id)
         .single();
       if (data?.last_position && videoRef.current) {
-        // Pune delay ca să fie sigur că video-ul e încărcat
         setTimeout(() => {
           try {
             videoRef.current.currentTime = data.last_position;
@@ -71,29 +70,26 @@ export default function WatchPage() {
     }
     fetchLastProgress();
     // eslint-disable-next-line
-  }, [user?.id, film?.id, videoUrl]);
+  }, [activeProfile?.id, film?.id, videoUrl]);
 
-  // Salvează progresul la interval regulat și la PAUZĂ
+  // Salvează progresul la interval regulat și la PAUZĂ (!!! per profil)
   useEffect(() => {
-    if (!user?.id || !film?.id) return;
-    // Functia care salveaza progresul
+    if (!activeProfile?.id || !film?.id) return;
     const saveProgress = () => {
       if (videoRef.current) {
         const poz = Math.floor(videoRef.current.currentTime || 0);
-        if (poz > 0) updateUserProgress(id, film.id, poz);
+        if (poz > 0) updateUserProgress(activeProfile.id, film.id, poz);
       }
     };
-    // Interval la fiecare 8 secunde
     saveProgressInterval.current = setInterval(saveProgress, 8000);
-    // La UNMOUNT salvează progresul final
     return () => {
       clearInterval(saveProgressInterval.current);
       saveProgress();
     };
     // eslint-disable-next-line
-  }, [user?.id, film?.id, videoUrl]);
+  }, [activeProfile?.id, film?.id, videoUrl]);
 
-  // Salvează și la PAUZĂ!
+  // Salvează și la PAUZĂ! (!!! per profil)
   const handlePlayPause = (e) => {
     e.stopPropagation();
     if (videoRef.current.paused) {
@@ -106,16 +102,16 @@ export default function WatchPage() {
       setIsPlaying(false);
       setCenterAction("pause");
       // Save progress la pauză
-      if (user?.id && film?.id) {
+      if (activeProfile?.id && film?.id) {
         const poz = Math.floor(videoRef.current.currentTime || 0);
-        if (poz > 0) updateUserProgress(id, film.id, poz);
+        if (poz > 0) updateUserProgress(activeProfile.id, film.id, poz);
       }
     }
     clearTimeout(centerTimeout.current);
     centerTimeout.current = setTimeout(() => setCenterAction(null), 500);
   };
 
-  // Update time/progress
+  // ... restul codului rămâne identic ...
   useEffect(() => {
     if (!film || !videoRef.current) return;
     const vid = videoRef.current;
@@ -132,7 +128,6 @@ export default function WatchPage() {
     };
   }, [film]);
 
-  // Sync volume & mute
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.volume = volume;
@@ -140,7 +135,6 @@ export default function WatchPage() {
     }
   }, [volume, isMuted]);
 
-  // Auto-hide controls + cursor
   useEffect(() => {
     function show() {
       setShowControls(true);
@@ -157,7 +151,6 @@ export default function WatchPage() {
     };
   }, []);
 
-  // Fullscreen change listener
   useEffect(() => {
     const onFs = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
     document.addEventListener("fullscreenchange", onFs);

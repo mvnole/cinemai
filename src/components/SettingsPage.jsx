@@ -1,37 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "ro", label: "Romanian" },
-  { value: "de", label: "German" },
-  { value: "fr", label: "French" },
-  { value: "it", label: "Italian" }
-];
-const QUALITIES = [
-  { value: "auto", label: "Auto" },
-  { value: "480p", label: "480p" },
-  { value: "720p", label: "720p" },
-  { value: "1080p", label: "1080p" },
-  { value: "4k", label: "4K" }
-];
-const THEMES = [
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-  { value: "system", label: "System" }
-];
+// ... LANGUAGES, QUALITIES, THEMES la fel
 
 export function SettingsPage() {
-  // State pentru profil
+  const { user, activeProfile } = useUser();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // State pentru avatar upload
   const [uploading, setUploading] = useState(false);
   const inputFileRef = useRef();
 
-  // State pentru preferințe UI locale
+  // Preferințe UI locale (poți citi din profil dacă vrei)
   const [language, setLanguage] = useState(LANGUAGES[0].value);
   const [quality, setQuality] = useState(QUALITIES[0].value);
   const [theme, setTheme] = useState(THEMES[0].value);
@@ -40,35 +22,29 @@ export function SettingsPage() {
   const [notifications, setNotifications] = useState(false);
   const [profileLock, setProfileLock] = useState(false);
 
-  // -------- 1. Ia userul logat și datele de profil din Supabase
+  // 1. Ia profilul activ
   useEffect(() => {
-    const fetchProfile = async () => {
-      setLoadingProfile(true);
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setProfile(null);
-        setLoadingProfile(false);
-        return;
-      }
-      // Ia profilul extins
+    if (!activeProfile?.id) {
+      setProfile(null);
+      setLoadingProfile(false);
+      return;
+    }
+    setLoadingProfile(true);
+    async function fetchProfile() {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, username, email, avatar_url, full_name, birth_date, gender")
-        .eq("id", user.id)
+        .eq("id", activeProfile.id)
         .single();
 
       if (data) setProfile(data);
       setLoadingProfile(false);
-    };
-
+    }
     fetchProfile();
-  }, []);
+  }, [activeProfile?.id]);
 
-  // -------- 2. Upload Avatar custom (folosește avatar_url)
-  const handleAvatarClick = () => {
-    inputFileRef.current.click();
-  };
+  // 2. Upload avatar doar pentru profilul activ
+  const handleAvatarClick = () => inputFileRef.current.click();
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -78,7 +54,6 @@ export function SettingsPage() {
     const fileName = `${profile.id}_${Date.now()}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
 
-    // Uploadezi în bucketul avatars
     let { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(filePath, file, { upsert: true });
@@ -87,21 +62,18 @@ export function SettingsPage() {
       setUploading(false);
       return;
     }
-    // Ia public URL
     const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const avatarUrl = data.publicUrl;
-    // Update profil cu url nou (avatar_url)
+    // Update profil
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ avatar_url: avatarUrl })
       .eq("id", profile.id);
-    if (!updateError) {
-      setProfile({ ...profile, avatar_url: avatarUrl });
-    }
+    if (!updateError) setProfile({ ...profile, avatar_url: avatarUrl });
     setUploading(false);
   };
 
-  // -------- 3. Logout (poți adapta funcția după contextul tău)
+  // 3. Logout user principal (rămâne la fel)
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";

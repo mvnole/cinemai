@@ -9,7 +9,6 @@ import { useUser } from "../context/UserContext";
 import { useUserProgress } from "../hooks/useUserProgress";
 
 function filterByGenre(films, genre) {
-  // Acceptă atât genre ca string, cât și genres ca array
   return films.filter(film => {
     if (film.genre && typeof film.genre === "string") {
       return film.genre.toLowerCase().includes(genre.toLowerCase());
@@ -25,9 +24,15 @@ function HomePage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { films, loading } = useFilms();
-  const { user } = useUser();
-  const { favorites = [], loading: favLoading } = useUserFavorites(user?.id);
-  const { progressList, loading: progressLoading } = useUserProgress(user?.id);
+
+  // --- PROFILE-AWARE LOGIC ---
+  // Ia profilul activ din context (sau din user, dacă ai implementat direct acolo)
+  const { activeProfile } = useUser();
+  // alternativ: const { activeProfile } = useUser(); dacă l-ai pus acolo
+
+  // hooks-urile favorite și progres trebuie să fie PE profil, nu pe user principal
+  const { favorites = [], loading: favLoading } = useUserFavorites(activeProfile?.id);
+  const { progressList, loading: progressLoading } = useUserProgress(activeProfile?.id);
 
   // --------- REDIRECT LOGIC FOR SUPABASE RESET PASSWORD FLOW -----------
   useEffect(() => {
@@ -42,7 +47,7 @@ function HomePage() {
   if (!films.length) return <div className="text-center py-12">No films available.</div>;
 
   const myListFilms = films.filter(film => favorites.includes(film.id));
-  const continueWatchingIds = progressList.map(p => p.film_id);
+  const continueWatchingIds = progressList?.map(p => p.film_id) || [];
   const continueWatchingFilms = films.filter(film => continueWatchingIds.includes(film.id));
 
   // Filtare categorii reale

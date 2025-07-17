@@ -1,44 +1,52 @@
+// src/utils/voteFilm.js
+
 import { supabase } from "../utils/supabaseClient";
 
-// Votează (like = 5, dislike = 1). Dacă vote === null, șterge votul!
-export async function voteFilm(filmId, userId, vote) {
+// Upsert (like = 5, dislike = 1). Dacă vote === null, șterge votul.
+export async function voteFilm(filmId, profileId, vote) {
+  if (!filmId || !profileId) {
+    console.warn("voteFilm: filmId sau profileId lipsă!");
+    return;
+  }
+
   if (vote === null) {
-    // Șterge votul userului pentru film
+    // Șterge votul profilului pentru film
     const { error: deleteError } = await supabase
       .from("film_votes")
       .delete()
       .eq("film_id", filmId)
-      .eq("user_id", userId);
+      .eq("profile_id", profileId);
     if (deleteError) {
-      console.error("Eroare la DELETE vot:", deleteError);
+      console.error("Eroare la DELETE vot:", deleteError.message);
     }
     return deleteError;
   }
 
-  // Upsert cu conflict pe ["film_id", "user_id"]
+  // Upsert cu conflict pe ["film_id", "profile_id"]
   const { error } = await supabase
     .from("film_votes")
     .upsert(
-      [{ film_id: filmId, user_id: userId, vote }],
-      { onConflict: ['film_id', 'user_id'] }
+      [{ film_id: filmId, profile_id: profileId, vote }],
+      { onConflict: ["film_id", "profile_id"] }
     );
   if (error) {
-    console.error("Eroare la UPSERT vot:", error);
+    console.error("Eroare la UPSERT vot:", error.message);
   }
   return error;
 }
 
-// Ia votul userului pentru un film (returnează null dacă nu există vot)
-export async function getUserVote(filmId, userId) {
+// Ia votul profilului pentru un film (returnează null dacă nu există vot)
+export async function getProfileVote(filmId, profileId) {
+  if (!filmId || !profileId) return null;
   const { data, error } = await supabase
     .from("film_votes")
     .select("vote")
     .eq("film_id", filmId)
-    .eq("user_id", userId)
-    .maybeSingle(); // <<< AICI E SECRETUL!
+    .eq("profile_id", profileId)
+    .maybeSingle();
 
   if (error) {
-    console.error("Eroare la getUserVote:", error);
+    console.error("Eroare la getProfileVote:", error.message);
     return null;
   }
   return data?.vote ?? null;
@@ -46,6 +54,7 @@ export async function getUserVote(filmId, userId) {
 
 // Calculează media ratingurilor pentru un film (doar voturi 1 sau 5)
 export async function getFilmAverageRating(filmId) {
+  if (!filmId) return 0;
   const { data, error } = await supabase
     .from("film_votes")
     .select("vote")

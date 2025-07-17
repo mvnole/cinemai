@@ -1,69 +1,61 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { Play, Heart, X, Plus, ThumbsUp } from "lucide-react";
+import { Play, X, Plus, ThumbsUp } from "lucide-react";
 import { Player, BigPlayButton } from "video-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFilms } from "../hooks/useFilms";
-import { getFilmAverageRating, voteFilm } from "../utils/voteFilm";
+import { getFilmAverageRating, voteFilm, getProfileVote } from "../utils/voteFilm";
 import { useUser } from "../context/UserContext";
 import "video-react/dist/video-react.css";
-import { supabase } from "../utils/supabaseClient";
 
 export function FilmPageModal() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { films, loading } = useFilms();
-  const film = films.find((f) => f.id === id);
+  const film = films.find((f) => String(f.id) === String(id));
   const modalRef = useRef();
   const playerRef = useRef(null);
   const [isClosing, setIsClosing] = useState(false);
 
-  // MUTAREA AICI
-  const { user } = useUser();
+  const { activeProfile } = useUser();
 
-  // === RATING DIN SUPABASE ===
+  // === RATING ===
   const [avgRating, setAvgRating] = useState(null);
-
-  // VOT USER
   const [userVote, setUserVote] = useState(null); // 5 = like, 1 = dislike, null = neutru
 
   useEffect(() => {
     async function fetchVotes() {
-      if (!film?.id) return;
-
-      const avg = await getFilmAverageRating(film.id);
-      setAvgRating(avg);
-
-      if (user?.id) {
-        const { data } = await supabase
-          .from("film_votes")
-          .select("vote")
-          .eq("film_id", film.id)
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (data) setUserVote(data.vote);
-        else setUserVote(null);
-      } else {
+      if (!film?.id || !activeProfile?.id) {
+        setAvgRating(null);
         setUserVote(null);
+        return;
       }
+      // Ia votul REAL (din DB)
+      const vote = await getProfileVote(film.id, activeProfile.id);
+      setUserVote(vote);
+
+      // Media
+      const avg = await getFilmAverageRating(film.id);
+      if (avg !== null) setAvgRating(avg);
     }
     fetchVotes();
-  }, [film?.id, user?.id]);
+  }, [film?.id, activeProfile?.id]);
 
   // VOTEAZĂ LIKE/DISLIKE cu toggle (anulare la același click)
   async function handleVote(vote) {
-    if (!user?.id) {
-      alert("Trebuie să fii logat ca să votezi!");
+    if (!activeProfile?.id || !film?.id) {
+      alert("Trebuie să selectezi un profil pentru a vota!");
       return;
     }
     let newVote = vote;
-    if (userVote === vote) {
-      newVote = null; // anulează votul
-    }
-    await voteFilm(film.id, user.id, newVote);
-    setUserVote(newVote);
+    if (userVote === vote) newVote = null;
+    await voteFilm(film.id, activeProfile.id, newVote);
+
+    // Refă sincronizarea cu ce e în DB!
+    const actualVote = await getProfileVote(film.id, activeProfile.id);
+    setUserVote(actualVote);
+
     const avg = await getFilmAverageRating(film.id);
     if (avg !== null) setAvgRating(avg);
   }

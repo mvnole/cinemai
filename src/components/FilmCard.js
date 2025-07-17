@@ -4,80 +4,63 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, ThumbsUp } from "lucide-react";
 import { useFavorite } from "../hooks/useFavorite";
 import { useUser } from "../context/UserContext";
-import { voteFilm, getFilmAverageRating } from "../utils/voteFilm";
+import { voteFilm, getProfileVote, getFilmAverageRating } from "../utils/voteFilm"; // ATENȚIE: getProfileVote importat!
 import { supabase } from "../utils/supabaseClient";
-
 
 function FilmCard({ film }) {
   if (!film) return null;
 
-  useEffect(() => {
-    if (!film?.id) return;
-
-    async function fetchRating() {
-      const avg = await getFilmAverageRating(film.id);
-      setAvgRating(avg);
-    }
-    fetchRating();
-  }, [film?.id]);
-  
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useUser();
+  const { activeProfile } = useUser();
 
   // VOTING
-  const [userVote, setUserVote] = useState(null); // 5=like, 1=dislike, null=neutru
+  const [userVote, setUserVote] = useState(null);
   const [avgRating, setAvgRating] = useState(film.rating || 0);
 
-  // Hook-ul pentru favorite
-  const { isFavorite, addFavorite, removeFavorite } = useFavorite(film.id, user?.id);
+  // Favorite (cu profil activ)
+  const { isFavorite, addFavorite, removeFavorite } = useFavorite(film.id, activeProfile?.id);
 
-  // Preia votul userului și ratingul mediu la mount sau când se schimbă filmul/userul
+  // Preia votul profilului activ și ratingul mediu la mount sau când se schimbă filmul/profilul
   useEffect(() => {
+    if (!activeProfile?.id || !film?.id) return;
     async function fetchVotes() {
-      if (user?.id && film.id) {
-        // Vot user curent
-        const { data } = await supabase
-          .from("film_votes")
-          .select("vote")
-          .eq("film_id", film.id)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (data) setUserVote(data.vote);
-        else setUserVote(null);
+      // Ia votul real din DB (doar profile_id)
+      const vote = await getProfileVote(film.id, activeProfile.id);
+      setUserVote(vote);
 
-        // Media (dacă nu e deja ca prop)
-        const avg = await getFilmAverageRating(film.id);
-        if (avg !== null) setAvgRating(avg);
-      }
+      // Media
+      const avg = await getFilmAverageRating(film.id);
+      if (avg !== null) setAvgRating(avg);
     }
     fetchVotes();
-  }, [film.id, user?.id]);
+  }, [film?.id, activeProfile?.id]);
 
   // Votează like/dislike cu toggle (anulare la click pe același)
   async function handleVote(vote) {
-    if (!user?.id) {
-      alert("Trebuie să fii logat ca să votezi!");
+    if (!activeProfile?.id || !film?.id) {
+      alert("Trebuie să selectezi un profil și un film!");
       return;
     }
     let newVote = vote;
-    if (userVote === vote) {
-      newVote = null;
-    }
-    await voteFilm(film.id, user.id, newVote);
-    setUserVote(newVote);
+    if (userVote === vote) newVote = null;
+
+    await voteFilm(film.id, activeProfile.id, newVote);
+
+    // Refetch votul din DB după update!
+    const actualVote = await getProfileVote(film.id, activeProfile.id);
+    setUserVote(actualVote);
+
+    // Refetch media reală
     const avg = await getFilmAverageRating(film.id);
     if (avg !== null) setAvgRating(avg);
   }
 
   const handleClick = () => {
     navigate(`/film/${film.id}`, {
-      state: {
-        modal: true,
-        backgroundLocation: location,
-      },
+      state: { modal: true, backgroundLocation: location },
     });
   };
 
@@ -89,7 +72,6 @@ function FilmCard({ film }) {
     film.videoUrl ||
     "";
 
-  // Autoplay video pe hover
   useEffect(() => {
     const video = videoRef.current;
     if (isHovered && video) {
@@ -99,7 +81,7 @@ function FilmCard({ film }) {
       video.pause();
       video.currentTime = 0;
     }
-  }, [isHovered, videoUrl]); // reacționează și dacă se schimbă sursa!
+  }, [isHovered, videoUrl]);
 
   // Extrage genul din genres (array sau string)
   const genreText = film.genre || (Array.isArray(film.genres) ? film.genres.join(" • ") : film.genres);
@@ -174,49 +156,49 @@ function FilmCard({ film }) {
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-auto mt-1">
-  {/* LIKE button */}
-  <motion.button
-    whileTap={{ scale: 0.93 }}
-    whileHover={{ scale: 1.13 }}
-    className={`
-      rounded-full p-2 border-2
-      ${userVote === 5 ? "text-cyan-400 border-cyan-400" : "text-zinc-400 border-zinc-500"}
-      bg-transparent transition-colors duration-200
-    `}
-    onClick={e => {
-      e.stopPropagation();
-      handleVote(5);
-    }}
-    type="button"
-    aria-label="Like"
-    title="Like"
-    tabIndex={0}
-    style={{ background: "none" }}
-  >
-    <ThumbsUp size={28} strokeWidth={2.1} />
-  </motion.button>
+                {/* LIKE button */}
+                <motion.button
+                  whileTap={{ scale: 0.93 }}
+                  whileHover={{ scale: 1.13 }}
+                  className={`
+                    rounded-full p-2 border-2
+                    ${userVote === 5 ? "text-cyan-400 border-cyan-400" : "text-zinc-400 border-zinc-500"}
+                    bg-transparent transition-colors duration-200
+                  `}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleVote(5);
+                  }}
+                  type="button"
+                  aria-label="Like"
+                  title="Like"
+                  tabIndex={0}
+                  style={{ background: "none" }}
+                >
+                  <ThumbsUp size={28} strokeWidth={2.1} />
+                </motion.button>
 
-  {/* DISLIKE button */}
-  <motion.button
-    whileTap={{ scale: 0.93 }}
-    whileHover={{ scale: 1.13 }}
-    className={`
-      rounded-full p-2 border-2
-      ${userVote === 1 ? "text-rose-400 border-rose-400" : "text-zinc-400 border-zinc-500"}
-      bg-transparent transition-colors duration-200
-    `}
-    onClick={e => {
-      e.stopPropagation();
-      handleVote(1);
-    }}
-    type="button"
-    aria-label="Dislike"
-    title="Dislike"
-    tabIndex={0}
-    style={{ background: "none" }}
-  >
-    <ThumbsUp className="rotate-180" size={28} strokeWidth={2.1} />
-  </motion.button>
+                {/* DISLIKE button */}
+                <motion.button
+                  whileTap={{ scale: 0.93 }}
+                  whileHover={{ scale: 1.13 }}
+                  className={`
+                    rounded-full p-2 border-2
+                    ${userVote === 1 ? "text-rose-400 border-rose-400" : "text-zinc-400 border-zinc-500"}
+                    bg-transparent transition-colors duration-200
+                  `}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleVote(1);
+                  }}
+                  type="button"
+                  aria-label="Dislike"
+                  title="Dislike"
+                  tabIndex={0}
+                  style={{ background: "none" }}
+                >
+                  <ThumbsUp className="rotate-180" size={28} strokeWidth={2.1} />
+                </motion.button>
 
                 {/* STAR / RATING */}
                 <span
@@ -254,8 +236,8 @@ function FilmCard({ film }) {
                   whileHover={{ scale: 1.18 }}
                   onClick={e => {
                     e.stopPropagation();
-                    if (!user) {
-                      alert("Trebuie să fii logat ca să adaugi la favorite!");
+                    if (!activeProfile) {
+                      alert("Trebuie să selectezi un profil ca să adaugi la favorite!");
                       return;
                     }
                     if (isFavorite) removeFavorite();
