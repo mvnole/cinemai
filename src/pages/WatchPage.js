@@ -13,8 +13,7 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { updateProfileProgress } from "../utils/userProgress";
-import { supabase } from "../utils/supabaseClient";
+import { updateUserProgress, getFilmProgress } from "../hooks/useUserProgress";
 
 const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
 
@@ -22,9 +21,7 @@ export default function WatchPage() {
   const { id } = useParams();
   const { films, loading } = useFilms();
   const film = films.find((f) => String(f.id) === String(id));
-
-  // Important: activeProfile din context!
-  const { user, activeProfile } = useUser();
+  const { activeProfile } = useUser();
 
   const containerRef = useRef();
   const videoRef = useRef();
@@ -54,16 +51,11 @@ export default function WatchPage() {
   useEffect(() => {
     async function fetchLastProgress() {
       if (!activeProfile?.id || !film?.id || !videoRef.current) return;
-      const { data, error } = await supabase
-        .from("user_progress")
-        .select("last_position")
-        .eq("profile_id", activeProfile.id)
-        .eq("film_id", film.id)
-        .single();
-      if (data?.last_position && videoRef.current) {
+      const lastPosition = await getFilmProgress(activeProfile.id, film.id);
+      if (lastPosition && videoRef.current) {
         setTimeout(() => {
           try {
-            videoRef.current.currentTime = data.last_position;
+            videoRef.current.currentTime = lastPosition;
           } catch (err) {}
         }, 300);
       }
@@ -111,7 +103,6 @@ export default function WatchPage() {
     centerTimeout.current = setTimeout(() => setCenterAction(null), 500);
   };
 
-  // ... restul codului rămâne identic ...
   useEffect(() => {
     if (!film || !videoRef.current) return;
     const vid = videoRef.current;

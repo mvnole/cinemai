@@ -24,30 +24,30 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 // Banner cookies (cu update pentru userii vechi logați)
-function CookieConsentBanner() {
+export function CookieConsentBanner() {
   const { user } = useUser();
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    async function checkConsent() {
-      if (user?.id) {
-        // ATENȚIE: folosește user_id sau id după cum ai coloana în profiles
-        const { data: profile } = await supabase
-          .from("accounts")
-  .select("accepted_privacy, accepted_terms")
-  .eq("id", user.id)
-  .maybeSingle();
-        if (!profile?.accepted_privacy || !profile?.accepted_terms) {
-          setVisible(true);
-        } else {
-          setVisible(false);
-        }
+  // Scoatem funcția ca să poată fi apelată și în handleAccept!
+  const checkConsent = async () => {
+    if (user?.id) {
+      const { data: account, error } = await supabase
+        .from("accounts")
+        .select("username, accepted_privacy, accepted_terms")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!account?.accepted_privacy || !account?.accepted_terms) {
+        setVisible(true);
       } else {
-        // Guest: localStorage
-        const localConsent = localStorage.getItem("cinemai_cookie_consent");
-        setVisible(!localConsent || localConsent === "pending");
+        setVisible(false);
       }
+    } else {
+      const localConsent = localStorage.getItem("cinemai_cookie_consent");
+      setVisible(!localConsent || localConsent === "pending");
     }
+  };
+
+  useEffect(() => {
     checkConsent();
   }, [user]);
 
@@ -55,29 +55,30 @@ function CookieConsentBanner() {
     localStorage.setItem("cinemai_cookie_consent", "accepted");
     if (user?.id) {
       const now = new Date().toISOString();
-      await supabase.from("profiles").update({
+      const { error } = await supabase.from("accounts").update({
         accepted_privacy: true,
         accepted_privacy_at: now,
         accepted_terms: true,
         accepted_terms_at: now,
-        // Completează și celelalte câmpuri dacă lipsesc
-        email: user.email || undefined,
-        username: user.user_metadata?.username || undefined,
-        full_name: user.user_metadata?.fullName || undefined,
-        gender: user.user_metadata?.gender || undefined,
-        birth_date: user.user_metadata?.birthDate || undefined,
       }).eq("id", user.id);
+
+      if (error) {
+        console.error("[CookieBanner] Supabase UPDATE error:", error);
+        alert("Supabase error: " + error.message);
+        return;
+      }
+      await checkConsent(); // Refă fetch-ul, astfel încât bannerul să dispară la refresh!
     }
     setVisible(false);
   };
 
-  // **Asta lipsea!**
   const handleDecline = () => {
     localStorage.setItem("cinemai_cookie_consent", "declined");
     setVisible(false);
   };
 
-  if (!visible) return null;
+  // Bonus: poți adăuga și localStorage check ca fallback extra safe
+  if (!visible || localStorage.getItem("cinemai_cookie_consent") === "accepted") return null;
 
   return (
     <div className="fixed bottom-0 left-0 w-full z-[99999] bg-black/90 backdrop-blur-md p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 shadow-xl">

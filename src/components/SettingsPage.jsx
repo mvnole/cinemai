@@ -3,55 +3,72 @@ import { supabase } from "../utils/supabaseClient";
 import { useUser } from "../context/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ... LANGUAGES, QUALITIES, THEMES la fel
+// Lista limbilor
+const LANGUAGES = [
+  { value: "ro", label: "Română" },
+  { value: "en", label: "English" },
+  { value: "fr", label: "Français" },
+];
+// Lista calităților video
+const QUALITIES = [
+  { value: "auto", label: "Auto" },
+  { value: "1080p", label: "Full HD (1080p)" },
+  { value: "720p", label: "HD (720p)" },
+  { value: "480p", label: "SD (480p)" },
+];
+// Lista temelor vizuale
+const THEMES = [
+  { value: "auto", label: "Auto (system)" },
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+];
 
 export function SettingsPage() {
-  const { user, activeProfile } = useUser();
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const { user } = useUser();
+  const [account, setAccount] = useState(null);
+  const [loadingAccount, setLoadingAccount] = useState(true);
 
   const [uploading, setUploading] = useState(false);
   const inputFileRef = useRef();
 
-  // Preferințe UI locale (poți citi din profil dacă vrei)
+  // Preferințe UI locale (pot fi salvate în DB dacă vrei)
   const [language, setLanguage] = useState(LANGUAGES[0].value);
   const [quality, setQuality] = useState(QUALITIES[0].value);
   const [theme, setTheme] = useState(THEMES[0].value);
   const [subtitles, setSubtitles] = useState(true);
   const [autoplay, setAutoplay] = useState(true);
   const [notifications, setNotifications] = useState(false);
-  const [profileLock, setProfileLock] = useState(false);
 
-  // 1. Ia profilul activ
+  // 1. Fetch date cont la load
   useEffect(() => {
-    if (!activeProfile?.id) {
-      setProfile(null);
-      setLoadingProfile(false);
+    if (!user?.id) {
+      setAccount(null);
+      setLoadingAccount(false);
       return;
     }
-    setLoadingProfile(true);
-    async function fetchProfile() {
+    setLoadingAccount(true);
+    async function fetchAccount() {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, username, email, avatar_url, full_name, birth_date, gender")
-        .eq("id", activeProfile.id)
+        .from("accounts")
+        .select("id, username, email, full_name, birth_date, gender")
+        .eq("id", user.id)
         .single();
 
-      if (data) setProfile(data);
-      setLoadingProfile(false);
+      if (data) setAccount(data);
+      setLoadingAccount(false);
     }
-    fetchProfile();
-  }, [activeProfile?.id]);
+    fetchAccount();
+  }, [user?.id]);
 
-  // 2. Upload avatar doar pentru profilul activ
+  // 2. Upload avatar cont principal
   const handleAvatarClick = () => inputFileRef.current.click();
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (!file || !profile) return;
+    if (!file || !account) return;
     setUploading(true);
     const fileExt = file.name.split(".").pop();
-    const fileName = `${profile.id}_${Date.now()}.${fileExt}`;
+    const fileName = `${account.id}_${Date.now()}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
 
     let { error: uploadError } = await supabase.storage
@@ -64,22 +81,22 @@ export function SettingsPage() {
     }
     const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const avatarUrl = data.publicUrl;
-    // Update profil
+    // Update cont principal
     const { error: updateError } = await supabase
-      .from("profiles")
+      .from("accounts")
       .update({ avatar_url: avatarUrl })
-      .eq("id", profile.id);
-    if (!updateError) setProfile({ ...profile, avatar_url: avatarUrl });
+      .eq("id", account.id);
+    if (!updateError) setAccount({ ...account, avatar_url: avatarUrl });
     setUploading(false);
   };
 
-  // 3. Logout user principal (rămâne la fel)
+  // 3. Logout user principal
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
 
-  if (loadingProfile) {
+  if (loadingAccount) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-cyan-400 text-xl font-bold animate-pulse">
@@ -88,7 +105,7 @@ export function SettingsPage() {
       </div>
     );
   }
-  if (!profile) {
+  if (!account) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-red-400 text-xl font-bold">
@@ -111,7 +128,7 @@ export function SettingsPage() {
           overflow-hidden
         "
       >
-        {/* Stânga: Profil user */}
+        {/* Stânga: Cont user */}
         <div className="
           flex flex-col items-center justify-center
           min-w-[260px] max-w-[320px] bg-zinc-900/90 py-10 px-5
@@ -120,11 +137,11 @@ export function SettingsPage() {
           <div className="relative group mb-3">
             <img
               src={
-                profile.avatar_url
-                  ? profile.avatar_url
-                  : `https://ui-avatars.com/api/?name=${profile.username}`
+                account.avatar_url
+                  ? account.avatar_url
+                  : `https://ui-avatars.com/api/?name=${account.username}`
               }
-              alt={profile.username}
+              alt={account.username}
               className="w-24 h-24 rounded-full border-4 border-cyan-500 object-cover shadow mb-2 cursor-pointer hover:opacity-80 transition"
               onClick={handleAvatarClick}
             />
@@ -144,14 +161,14 @@ export function SettingsPage() {
               {uploading ? "Uploading..." : "Change avatar"}
             </button>
           </div>
-          <div className="text-2xl font-bold mb-1 text-center">{profile.username}</div>
-          <div className="text-gray-400 text-sm mb-1 text-center break-all">{profile.email}</div>
-          <div className="text-gray-500 text-xs text-center mb-2">{profile.full_name}</div>
-          {profile.birth_date && (
-            <div className="text-gray-500 text-xs text-center mb-2">Birth date: {profile.birth_date}</div>
+          <div className="text-2xl font-bold mb-1 text-center">{account.username}</div>
+          <div className="text-gray-400 text-sm mb-1 text-center break-all">{account.email}</div>
+          <div className="text-gray-500 text-xs text-center mb-2">{account.full_name}</div>
+          {account.birth_date && (
+            <div className="text-gray-500 text-xs text-center mb-2">Birth date: {account.birth_date}</div>
           )}
-          {profile.gender && (
-            <div className="text-gray-500 text-xs text-center mb-2">Gender: {profile.gender}</div>
+          {account.gender && (
+            <div className="text-gray-500 text-xs text-center mb-2">Gender: {account.gender}</div>
           )}
           <button
             className="mt-8 text-red-500 hover:underline focus:underline focus:text-red-400 transition text-base"
@@ -194,12 +211,6 @@ export function SettingsPage() {
               <Toggle checked={notifications} onChange={setNotifications} />
               <label className="font-semibold group-hover:text-cyan-400 transition">
                 New content notifications
-              </label>
-            </div>
-            <div className="flex items-center gap-3 group cursor-pointer select-none">
-              <Toggle checked={profileLock} onChange={setProfileLock} />
-              <label className="font-semibold group-hover:text-cyan-400 transition">
-                Profile lock (password)
               </label>
             </div>
           </div>

@@ -19,7 +19,6 @@ export function useFilms(query = "") {
       }
 
       const { data, error } = await supaQuery;
-      console.log("SUPABASE FILMS ERROR:", error); // vezi dacă ai vreo eroare
       setFilms(data || []);
       setLoading(false);
     }

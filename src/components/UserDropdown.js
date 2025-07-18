@@ -1,31 +1,15 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, LogOut, Settings, Lock, PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { supabase } from "../utils/supabaseClient";
 
 export default function UserDropdown({ showUsers, setShowUsers, userMenuRef }) {
-  const { user, logout, selectProfile, activeProfile } = useUser();
-  const [profiles, setProfiles] = useState([]);
+  const { user, logout, selectProfile, activeProfile, profiles } = useUser();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  // Fetch profiles pentru user activ
-  useEffect(() => {
-    if (!user || !showUsers) return;
-    const fetchProfiles = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, name, avatar_url, is_locked")
-        .eq("user_id", user.id)
-        .order("name", { ascending: true });
-      setProfiles(!error && data ? data : []);
-    };
-    fetchProfiles();
-  }, [user, showUsers]);
-
-  // Close dropdown la click în afara lui
+  // Închide dropdown dacă dai click în afara meniului
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -47,9 +31,9 @@ export default function UserDropdown({ showUsers, setShowUsers, userMenuRef }) {
       setShowUsers(false);
       return;
     }
-    selectProfile(profile.id); // persistă și în context și localStorage
+    selectProfile(profile.id); // persistă în context + localStorage
     setShowUsers(false);
-    // navigate("/") dacă vrei redirect după selectare profil
+    // navigate("/") dacă vrei redirect imediat după selectare profil
   };
 
   const handleLogout = () => {
@@ -58,7 +42,6 @@ export default function UserDropdown({ showUsers, setShowUsers, userMenuRef }) {
     navigate("/register");
   };
 
-  // Link către pagina de user principal (cont auth)
   const accountPath = user
     ? `/user/${user.user_metadata?.username || user.id}`
     : "/login";
@@ -89,7 +72,7 @@ export default function UserDropdown({ showUsers, setShowUsers, userMenuRef }) {
             <>
               {/* Lista de profile */}
               <ul className="divide-y divide-gray-700">
-                {profiles.map((p) => (
+                {(profiles || []).map((p) => (
                   <li
                     key={p.id}
                     onClick={() => onSelectProfile(p)}

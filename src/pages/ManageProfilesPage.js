@@ -1,39 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Plus } from "lucide-react";
 import { useUser } from "../context/UserContext";
-import { supabase } from "../utils/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ManageProfilesPage() {
   const navigate = useNavigate();
-  const { user, selectProfile } = useUser();
-  const [profiles, setProfiles] = useState(null);
+  const { user, profiles, selectProfile, addProfile } = useUser();
   const [hoveredId, setHoveredId] = useState(null);
   const [curtainsClosing, setCurtainsClosing] = useState(false);
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      if (!user) {
-        setProfiles([]);
-        console.log("[ManageProfiles] User absent, profiles empty.");
-        return;
-      }
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("name", { ascending: true });
-      if (error) {
-        setProfiles([]);
-        console.log("[ManageProfiles] Eroare la fetch profiles:", error);
-      } else {
-        setProfiles((data || []).filter(p => !!p && !!p.id));
-        console.log("[ManageProfiles] Am incarcat profilele din DB:", data);
-      }
-    };
-    fetchProfiles();
-  }, [user]);
 
   const CLAP_WIDTH = "w-[270px]";
   const CLAP_HEIGHT = "h-[180px]";
@@ -71,59 +46,38 @@ export default function ManageProfilesPage() {
 
   // Handler cu efect de draperii + context
   const handleSelectProfile = (profile) => {
-  setCurtainsClosing(true);
-  console.log("[ManageProfiles] A selectat profilul:", profile);
-  setTimeout(() => {
-    selectProfile(profile.id); // <- trebuie să persiste și în localStorage!
-    // DEBUG
+    setCurtainsClosing(true);
     setTimeout(() => {
-      console.log("[ManageProfiles] localStorage after select:", localStorage.getItem("activeProfileId"));
-    }, 20);
-    navigate("/", { state: { fromManageProfiles: true } });
-  }, 900);
-};
+      selectProfile(profile.id); // <- persistă și în localStorage!
+      navigate("/", { state: { fromManageProfiles: true } });
+    }, 900);
+  };
 
   const handleEditProfile = (e, profile) => {
     e.stopPropagation();
-    console.log("[ManageProfiles] Edit profile click pentru:", profile);
     navigate(`/edit-profile/${profile.id}`);
   };
 
   const handleAddProfile = async () => {
     if (!Array.isArray(profiles) || profiles.length >= 3) {
       alert("Poți crea maximum 3 profile.");
-      console.log("[ManageProfiles] Maxim profile atins.");
       return;
     }
-    const { data: sessionData } = await supabase.auth.getSession();
-    const currentUser = sessionData?.session?.user;
-    if (!currentUser) {
-      alert("Deloghează-te și loghează-te din nou.");
-      console.log("[ManageProfiles] Fara user la add profile!");
-      return;
-    }
-    const newName = `Profile ${profiles.length + 1}`;
-    const avatarUrl = `https://i.pravatar.cc/150?u=${currentUser.id}-${profiles.length + 1}`;
-    const { data: dataArray, error } = await supabase
-      .from("profiles")
-      .insert({ user_id: currentUser.id, name: newName, avatar_url: avatarUrl })
-      .select();
-    const newProfile = Array.isArray(dataArray) ? dataArray[0] : null;
-    if (error || !newProfile) {
+    try {
+      await addProfile({
+        name: `Profile ${profiles.length + 1}`,
+        avatar_url: `https://i.pravatar.cc/150?u=${user.id}-${profiles.length + 1}`,
+      });
+    } catch (error) {
       alert("❌ Nu s-a putut crea profilul.");
       console.log("[ManageProfiles] Eroare la crearea profilului:", error);
-      return;
     }
-    setProfiles((prev) => ([...(prev || []).filter(p => !!p && !!p.id), newProfile]));
-    console.log("[ManageProfiles] Profil creat cu succes:", newProfile);
   };
 
   if (!user) {
-    console.log("[ManageProfiles] Nu exista user (inca incarca?)");
     return <div className="text-white py-12">Se încarcă profilurile...</div>;
   }
   if (!Array.isArray(profiles)) {
-    console.log("[ManageProfiles] Nu exista profiles (inca incarca?)");
     return <div className="text-white py-12">Se încarcă profilele...</div>;
   }
 
@@ -252,10 +206,7 @@ export default function ManageProfilesPage() {
           </AnimatePresence>
         </motion.div>
         <button
-          onClick={() => {
-            console.log("[ManageProfiles] Click done -> navigate /");
-            navigate("/");
-          }}
+          onClick={() => navigate("/")}
           className="mt-16 mb-6 px-16 py-3 rounded-xl font-semibold text-lg shadow-md bg-zinc-900/90 text-zinc-200 hover:bg-zinc-800 hover:text-white transition focus:outline-none"
         >
           Done

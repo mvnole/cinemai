@@ -18,11 +18,13 @@ export function UserProvider({ children }) {
       const { data } = await supabase.auth.getUser();
       setUser(data?.user || null);
       setLoading(false);
+      console.log("[UserContext] getUser ->", data?.user || null);
     };
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      console.log("[UserContext] onAuthStateChange ->", session?.user || null);
     });
     return () => {
       listener.subscription.unsubscribe();
@@ -32,69 +34,79 @@ export function UserProvider({ children }) {
   // 2. Upsert accounts și fetch profiles la user change
   useEffect(() => {
     if (!user?.id) {
+      // ATENȚIE: aici NU ștergem nimic din localStorage. Ștergem doar la logout explicit!
       setProfiles([]);
       setActiveProfile(null);
-      localStorage.removeItem("activeProfileId");
+      console.log("[UserContext] User not found (pending or logout), clear state (not localStorage)");
       return;
     }
     (async () => {
       await upsertAccount(user);
       try {
-        const profiles = await fetchProfiles(user.id);
-        setProfiles(profiles);
+        const fetchedProfiles = await fetchProfiles(user.id);
+        setProfiles(fetchedProfiles);
+        console.log("[UserContext] Profiles fetched ->", fetchedProfiles);
       } catch {
         setProfiles([]);
+        console.log("[UserContext] Profiles fetch error, set []");
       }
     })();
   }, [user]);
 
-  // 3. Sticky profile logic - NU suprascrie manualul, doar la prima încărcare!
+  // 3. Sticky profile logic Netflix style
   useEffect(() => {
-  // Log pentru fiecare execuție!
-  console.log("[UserContext] --- EFFECT TRIGGERED ---");
-  console.log("[UserContext] user?.id:", user?.id);
-  console.log("[UserContext] profiles:", profiles);
+    console.log("[UserContext] --- EFFECT TRIGGERED ---");
+    console.log("[UserContext] user?.id:", user?.id);
+    console.log("[UserContext] profiles:", profiles);
+    console.log("[UserContext] localStorage activeProfileId:", localStorage.getItem("activeProfileId"));
 
-  if (!user?.id || profiles.length === 0) {
-    setActiveProfile(null);
-    console.log("[UserContext] NO USER or EMPTY profiles => setActiveProfile(null)");
-    return;
-  }
-
-  const savedProfileId = localStorage.getItem("activeProfileId");
-  console.log("[UserContext] savedProfileId from localStorage:", savedProfileId);
-
-  // 1. Dacă există profil salvat, încearcă să-l folosești!
-  if (savedProfileId) {
-    const found = profiles.find((p) => p.id === savedProfileId);
-    if (found) {
-      setActiveProfile(found);
-      console.log("[UserContext] Found savedProfileId in profiles, setActiveProfile:", found.id);
+    // 1. Doar la logout explicit curățăm complet!
+    if (!user?.id && activeProfile) {
+      setActiveProfile(null);
+      setProfiles([]);
+      localStorage.removeItem("activeProfileId");
+      console.log("[UserContext] LOGOUT DETECTED, clear all and localStorage");
       return;
-    } else {
-      console.log("[UserContext] savedProfileId NU E în profiles (poate a fost șters)");
     }
-  }
 
-  // 2. Dacă nu există profil salvat sau nu mai e valid, setează fallback la primul.
-  setActiveProfile(profiles[0]);
-  localStorage.setItem("activeProfileId", profiles[0].id);
-  console.log("[UserContext] Fallback: setActiveProfile(profiles[0]) și salvez în localStorage:", profiles[0].id);
+    // 2. Cât timp profilele nu sunt încărcate, nu modificăm nimic.
+    if (!user?.id || profiles.length === 0) {
+      return;
+    }
 
-}, [user, profiles]);
+    // 3. Dacă există profileId în localStorage și profil valid, îl folosim.
+    const savedProfileId = localStorage.getItem("activeProfileId");
+    const found = profiles.find((p) => p.id === savedProfileId);
 
+    if (savedProfileId && found) {
+      if (!activeProfile || activeProfile.id !== savedProfileId) {
+        setActiveProfile(found);
+        console.log("[UserContext] Set activeProfile from localStorage:", found);
+      } else {
+        console.log("[UserContext] activeProfile already set:", activeProfile);
+      }
+      return;
+    }
+
+    // 4. Dacă nu există profil salvat sau nu se potrivește, selectează primul profil și salvează-l sticky!
+    if (profiles.length > 0) {
+      setActiveProfile(profiles[0]);
+      localStorage.setItem("activeProfileId", profiles[0].id);
+      console.log("[UserContext] Set activeProfile as first profile and saved to localStorage:", profiles[0]);
+    }
+  }, [user, profiles]); // Nu include activeProfile aici!
 
   // 4. Select profile manual
   const selectProfile = (profileId) => {
-  const foundProfile = profiles.find((p) => p.id === profileId);
-  if (foundProfile) {
-    setActiveProfile(foundProfile);
-    localStorage.setItem("activeProfileId", foundProfile.id);
-    console.log("[UserContext] selectProfile: saved", foundProfile.id, "in localStorage");
-  } else {
-    console.log("[UserContext] selectProfile: profile not found", profileId);
-  }
-};
+    const foundProfile = profiles.find((p) => p.id === profileId);
+    if (foundProfile) {
+      setActiveProfile(foundProfile);
+      localStorage.setItem("activeProfileId", foundProfile.id);
+      console.log("[UserContext] selectProfile: saved", foundProfile.id, "in localStorage");
+    } else {
+      console.log("[UserContext] selectProfile: profile not found", profileId);
+    }
+  };
 
   // 5. GDPR logic pe cont
   useEffect(() => {
@@ -106,6 +118,7 @@ export function UserProvider({ children }) {
         .eq("id", user.id)
         .maybeSingle();
       setNeedsGdpr(!account?.accepted_privacy || !account?.accepted_terms);
+      console.log("[UserContext] GDPR checked:", account);
     }
     checkGdpr();
   }, [user]);
@@ -120,35 +133,39 @@ export function UserProvider({ children }) {
       accepted_terms_at: now,
     }).eq("id", user.id);
     setNeedsGdpr(false);
+    console.log("[UserContext] acceptGdpr called");
   };
 
   // 6. Profile management
   const handleAddProfile = async ({ name, avatar_url }) => {
     await addProfile(user.id, { name, avatar_url });
-    const profiles = await fetchProfiles(user.id);
-    setProfiles(profiles);
+    const fetchedProfiles = await fetchProfiles(user.id);
+    setProfiles(fetchedProfiles);
+    console.log("[UserContext] handleAddProfile:", fetchedProfiles);
   };
 
   const handleEditProfile = async (profileId, { name, avatar_url }) => {
     await editProfile(user.id, profileId, { name, avatar_url });
-    const profiles = await fetchProfiles(user.id);
-    setProfiles(profiles);
+    const fetchedProfiles = await fetchProfiles(user.id);
+    setProfiles(fetchedProfiles);
     if (activeProfile?.id === profileId) {
-      const updated = profiles.find((pr) => pr.id === profileId);
+      const updated = fetchedProfiles.find((pr) => pr.id === profileId);
       if (updated) {
         setActiveProfile(updated);
         localStorage.setItem("activeProfileId", updated.id);
+        console.log("[UserContext] handleEditProfile, updated activeProfile", updated);
       }
     }
   };
 
   const handleDeleteProfile = async (profileId) => {
     await deleteProfile(user.id, profileId);
-    const profiles = await fetchProfiles(user.id);
-    setProfiles(profiles);
+    const fetchedProfiles = await fetchProfiles(user.id);
+    setProfiles(fetchedProfiles);
     if (activeProfile?.id === profileId) {
       setActiveProfile(null);
       localStorage.removeItem("activeProfileId");
+      console.log("[UserContext] handleDeleteProfile, deleted activeProfile", profileId);
     }
   };
 
@@ -168,6 +185,7 @@ export function UserProvider({ children }) {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    console.log("[UserContext] login called for", email);
   };
 
   const register = async (email, password, metadata = {}) => {
@@ -191,14 +209,17 @@ export function UserProvider({ children }) {
       },
     });
     if (error) throw error;
+    console.log("[UserContext] register called for", email);
   };
 
+  // 8. Logout explicit (aici chiar ștergi tot, ca la Netflix)
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfiles([]);
     setActiveProfile(null);
     localStorage.removeItem("activeProfileId");
+    console.log("[UserContext] logout: user, profiles, activeProfile cleared");
   };
 
   return (

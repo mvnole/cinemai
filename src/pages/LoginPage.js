@@ -55,7 +55,7 @@ function LoginPage() {
         }
       }
 
-      navigate("/");
+      navigate("/manage-profiles");
     } catch (err) {
       alert("Login error: " + (err.message || "Invalid credentials."));
     }

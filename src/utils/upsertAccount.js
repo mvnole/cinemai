@@ -4,8 +4,7 @@ export async function upsertAccount(user) {
   if (!user?.id) return;
   const now = new Date().toISOString();
 
-  // DEBUG: vezi ce ajunge in user_metadata!
-  console.log("[upsertAccount] user_metadata:", user.user_metadata);
+  
 
   const email      = user.email ?? null;
   const username   = user.user_metadata?.username ?? null;
@@ -33,9 +32,5 @@ export async function upsertAccount(user) {
       updated_at: now,
     }], { onConflict: "id" });
 
-  if (error) {
-    console.error("[upsertAccount] ERROR:", error.message);
-  } else {
-    console.log("[upsertAccount] SUCCESS", email);
-  }
+  
 }
