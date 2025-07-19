@@ -54,6 +54,8 @@ function HomePage() {
   const sciFiFilms = filterByGenre(films, "Sci-Fi");
   const actionFilms = filterByGenre(films, "Action");
   const horrorFilms = filterByGenre(films, "Horror");
+  const documentariesFilms = filterByGenre(films, "Documentaries");
+
 
   return (
     <div className="space-y-10">
@@ -93,6 +95,13 @@ function HomePage() {
       <Section
         title="Horror"
         items={horrorFilms}
+        location={location}
+        favorites={favorites}
+        showHeart
+      />
+      <Section
+        title="Documentaries"  // <-- Adaugă secțiunea aici!
+        items={documentariesFilms}
         location={location}
         favorites={favorites}
         showHeart

@@ -82,7 +82,7 @@ export default function ManageProfilesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#14171e] via-black to-[#181b23] flex flex-col items-center justify-center relative">
+    <div className="min-h-screen flex flex-col items-center justify-center relative">
       {Draperies}
       <div className="w-full max-w-7xl mx-auto flex flex-col items-center">
         <h1 className="text-4xl font-bold text-white tracking-tight select-none drop-shadow-lg z-10 pt-6"></h1>
@@ -103,7 +103,8 @@ export default function ManageProfilesPage() {
                 exit="exit"
                 tabIndex={0}
                 onClick={() => handleSelectProfile(profile)}
-                className="group cursor-pointer relative flex flex-col items-center select-none outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                whileTap={{ scale: 1.04 }}
+                className="group cursor-pointer relative flex flex-col items-center select-none transition"
                 style={{ zIndex: 10 - idx }}
               >
                 {/* CLAPETA CONTAINER */}
@@ -175,6 +176,7 @@ export default function ManageProfilesPage() {
                 animate="visible"
                 exit="exit"
                 onClick={handleAddProfile}
+                whileTap={{ scale: 1.04 }}
                 className="group cursor-pointer flex flex-col items-center select-none"
                 whileHover={{ scale: 1.09, rotate: -2 }}
               >

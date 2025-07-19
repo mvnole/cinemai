@@ -7,24 +7,28 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null); // <-- NOU: sesiune!
   const [loading, setLoading] = useState(true);
   const [needsGdpr, setNeedsGdpr] = useState(false);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
 
-  // 1. Auth logic
+  // 1. Auth logic + session!
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user || null);
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data?.session || null);
+      setUser(data?.session?.user || null);
       setLoading(false);
-      console.log("[UserContext] getUser ->", data?.user || null);
+      console.log("[UserContext] getSession ->", data?.session?.user || null);
     };
-    getUser();
+    getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      console.log("[UserContext] onAuthStateChange ->", session?.user || null);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, sessionObj) => {
+      setSession(sessionObj || null);
+      setUser(sessionObj?.user || null);
+      setLoading(false);
+      console.log("[UserContext] onAuthStateChange ->", sessionObj?.user || null);
     });
     return () => {
       listener.subscription.unsubscribe();
@@ -55,56 +59,50 @@ export function UserProvider({ children }) {
 
   // 3. Sticky profile logic Netflix style
   useEffect(() => {
-    console.log("[UserContext] --- EFFECT TRIGGERED ---");
-    console.log("[UserContext] user?.id:", user?.id);
-    console.log("[UserContext] profiles:", profiles);
-    console.log("[UserContext] localStorage activeProfileId:", localStorage.getItem("activeProfileId"));
+    if (!user?.id) {
+      setProfiles([]);
+      setActiveProfile(null);
+      return;
+    }
+    (async () => {
+      await upsertAccount(user);
+      try {
+        const fetchedProfiles = await fetchProfiles(user.id);
+        setProfiles(fetchedProfiles);
+      } catch {
+        setProfiles([]);
+      }
+    })();
+  }, [user]);
 
-    // 1. Doar la logout explicit curățăm complet!
+  useEffect(() => {
+    // ... logica sticky profile identică ...
     if (!user?.id && activeProfile) {
       setActiveProfile(null);
       setProfiles([]);
       localStorage.removeItem("activeProfileId");
-      console.log("[UserContext] LOGOUT DETECTED, clear all and localStorage");
       return;
     }
-
-    // 2. Cât timp profilele nu sunt încărcate, nu modificăm nimic.
-    if (!user?.id || profiles.length === 0) {
-      return;
-    }
-
-    // 3. Dacă există profileId în localStorage și profil valid, îl folosim.
+    if (!user?.id || profiles.length === 0) return;
     const savedProfileId = localStorage.getItem("activeProfileId");
     const found = profiles.find((p) => p.id === savedProfileId);
-
     if (savedProfileId && found) {
       if (!activeProfile || activeProfile.id !== savedProfileId) {
         setActiveProfile(found);
-        console.log("[UserContext] Set activeProfile from localStorage:", found);
-      } else {
-        console.log("[UserContext] activeProfile already set:", activeProfile);
       }
       return;
     }
-
-    // 4. Dacă nu există profil salvat sau nu se potrivește, selectează primul profil și salvează-l sticky!
     if (profiles.length > 0) {
       setActiveProfile(profiles[0]);
       localStorage.setItem("activeProfileId", profiles[0].id);
-      console.log("[UserContext] Set activeProfile as first profile and saved to localStorage:", profiles[0]);
     }
-  }, [user, profiles]); // Nu include activeProfile aici!
+  }, [user, profiles]);
 
-  // 4. Select profile manual
   const selectProfile = (profileId) => {
     const foundProfile = profiles.find((p) => p.id === profileId);
     if (foundProfile) {
       setActiveProfile(foundProfile);
       localStorage.setItem("activeProfileId", foundProfile.id);
-      console.log("[UserContext] selectProfile: saved", foundProfile.id, "in localStorage");
-    } else {
-      console.log("[UserContext] selectProfile: profile not found", profileId);
     }
   };
 
@@ -227,6 +225,7 @@ export function UserProvider({ children }) {
       value={{
         user,
         setUser,
+        session,           // <-- NOU! Trebuie să fie inclus aici!
         loading,
         login,
         register,

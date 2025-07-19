@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 
 // HOOK pentru UN singur film (FilmCard)
-export function useFavorite(filmId, profileId) { // profileId, nu userId!
+export function useFavorite(filmId, profileId) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
 
@@ -15,7 +15,7 @@ export function useFavorite(filmId, profileId) { // profileId, nu userId!
         .from("favorites")
         .select("id")
         .eq("film_id", filmId)
-        .eq("user_id", profileId) // <-- corect
+        .eq("profile_id", profileId) // <-- corect: profile_id!
         .maybeSingle();
       if (!active) return;
       if (data) {
@@ -33,7 +33,7 @@ export function useFavorite(filmId, profileId) { // profileId, nu userId!
   const addFavorite = async () => {
     const { data } = await supabase
       .from("favorites")
-      .insert([{ film_id: filmId, user_id: profileId }]) // <-- corect
+      .insert([{ film_id: filmId, profile_id: profileId }]) // <-- corect
       .select("id")
       .maybeSingle();
     if (data) {
@@ -69,7 +69,7 @@ export function useUserFavorites(profileId) {
     supabase
       .from("favorites")
       .select("film_id")
-      .eq("user_id", profileId)
+      .eq("profile_id", profileId) // <-- profile_id!
       .then(({ data }) => {
         setFavorites(data ? data.map(row => row.film_id) : []);
         setLoading(false);

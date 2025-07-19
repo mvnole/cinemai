@@ -246,6 +246,7 @@ function App() {
         {state?.modal && (
           <Routes>
             <Route path="/film/:id" element={<FilmPageModal />} />
+            <Route path="/watch/:id" element={<WatchPage />} />
           </Routes>
         )}
       </AnimatePresence>

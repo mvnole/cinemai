@@ -142,6 +142,7 @@ function SearchPage() {
           { label: "Mystery", value: "Mystery" },
           { label: "Fantasy", value: "Fantasy" },
           { label: "Adventure", value: "Adventure" },
+          { label: "Documentaries", value: "Documentaries" },
         ]}
       />
       <Dropdown

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.4",
+    "@aws-sdk/client-s3": "^3.848.0",
+    "@aws-sdk/s3-request-presigner": "^3.848.0",
+    "@supabase/supabase-js": "^2.52.0",
     "ajv": "6.12.6",
     "ajv-keywords": "3.5.2",
     "framer-motion": "^12.15.0",
