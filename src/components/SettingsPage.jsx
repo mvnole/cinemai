@@ -116,7 +116,7 @@ function SettingsPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [ctxUser?.id]);
 
   // ---------- LOAD PROFILES ----------
@@ -161,7 +161,7 @@ function SettingsPage() {
     }
 
     fetchProfiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [authResolved, userId]);
 
   // ---------- LOAD ACTIVE PROFILE + LOCAL PREFS ----------
@@ -223,7 +223,7 @@ function SettingsPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [activeProfileId]);
 
   // ---------- THEME APPLY ----------
