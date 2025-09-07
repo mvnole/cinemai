@@ -8,7 +8,7 @@ import ManageProfilesPage from "./pages/ManageProfilesPage";
 import SearchPage from "./pages/SearchPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import WatchPage from "./pages/WatchPage";
-import { SettingsPage } from "./components/SettingsPage";
+import SettingsPage from "./components/SettingsPage";
 import UserPage from "./pages/UserPage";
 import { FilmPageModal } from "./components/FilmPageModal";
 import OutsideClickWrapper from "./components/OutsideClickWrapper";
@@ -19,103 +19,24 @@ import { useUser } from "./context/UserContext";
 import LoginPage from "./pages/LoginPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
-import { supabase } from "./utils/supabaseClient";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import CookiesPage from "./pages/CookiesPage";
+import CinemaCurtains from "./components/CinemaCurtains";
 
-// Banner cookies (cu update pentru userii vechi logați)
-export function CookieConsentBanner() {
-  const { user } = useUser();
-  const [visible, setVisible] = useState(false);
-
-  // Scoatem funcția ca să poată fi apelată și în handleAccept!
-  const checkConsent = async () => {
-    if (user?.id) {
-      const { data: account, error } = await supabase
-        .from("accounts")
-        .select("username, accepted_privacy, accepted_terms")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (!account?.accepted_privacy || !account?.accepted_terms) {
-        setVisible(true);
-      } else {
-        setVisible(false);
-      }
-    } else {
-      const localConsent = localStorage.getItem("cinemai_cookie_consent");
-      setVisible(!localConsent || localConsent === "pending");
-    }
-  };
-
-  useEffect(() => {
-    checkConsent();
-  }, [user]);
-
-  const handleAccept = async () => {
-    localStorage.setItem("cinemai_cookie_consent", "accepted");
-    if (user?.id) {
-      const now = new Date().toISOString();
-      const { error } = await supabase.from("accounts").update({
-        accepted_privacy: true,
-        accepted_privacy_at: now,
-        accepted_terms: true,
-        accepted_terms_at: now,
-      }).eq("id", user.id);
-
-      if (error) {
-        console.error("[CookieBanner] Supabase UPDATE error:", error);
-        alert("Supabase error: " + error.message);
-        return;
-      }
-      await checkConsent(); // Refă fetch-ul, astfel încât bannerul să dispară la refresh!
-    }
-    setVisible(false);
-  };
-
-  const handleDecline = () => {
-    localStorage.setItem("cinemai_cookie_consent", "declined");
-    setVisible(false);
-  };
-
-  // Bonus: poți adăuga și localStorage check ca fallback extra safe
-  if (!visible || localStorage.getItem("cinemai_cookie_consent") === "accepted") return null;
-
-  return (
-    <div className="fixed bottom-0 left-0 w-full z-[99999] bg-black/90 backdrop-blur-md p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 shadow-xl">
-      <span className="text-sm sm:text-base text-gray-200">
-        This site uses cookies to improve your experience.{" "}
-        <a href="/privacy" className="underline text-cyan-400 hover:text-cyan-300" target="_blank" rel="noopener noreferrer">
-          Learn more
-        </a>
-        .
-      </span>
-      <div className="flex gap-2">
-        <button
-          onClick={handleDecline}
-          className="bg-zinc-700 hover:bg-zinc-600 text-gray-200 px-6 py-2 rounded-lg font-semibold text-sm transition"
-        >
-          Decline
-        </button>
-        <button
-          onClick={handleAccept}
-          className="bg-cyan-500 hover:bg-cyan-400 text-white px-6 py-2 rounded-lg font-semibold text-sm shadow-md transition"
-        >
-          Accept
-        </button>
-      </div>
-    </div>
-  );
-}
+// Bannerul și modalul de cookie, plus funcția unică de salvare:
+import { CookieConsentBanner, CookiePreferencesModal, saveCookiePrefs } from "./components/CookieConsent";
 
 function App() {
   const [showUsers, setShowUsers] = useState(false);
   const mobileUserRef = useRef();
+  const [cookiePrefsOpen, setCookiePrefsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state;
-  const { loading, user } = useUser();
+  const { loading, user, saveCookiePreferencesToAccount } = useUser();
 
-  // ---------------- Draperii cinema ------------------
+  // Draperii cinema
   const [curtainsOpen, setCurtainsOpen] = useState(false);
   const [showCurtains, setShowCurtains] = useState(false);
 
@@ -127,8 +48,7 @@ function App() {
       setTimeout(() => setShowCurtains(false), 900);
       navigate("/", { replace: true, state: {} });
     }
-  }, [location.pathname, state]);
-  // ----------------------------------------------------
+  }, [location.pathname, state, navigate]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -154,6 +74,13 @@ function App() {
     }
   }, [loading, user, location.pathname, navigate]);
 
+  // Handler global pentru deschiderea modului de cookies
+  useEffect(() => {
+    const openPrefs = () => setCookiePrefsOpen(true);
+    window.addEventListener("cookie-preference-change", openPrefs);
+    return () => window.removeEventListener("cookie-preference-change", openPrefs);
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-white">
@@ -161,6 +88,12 @@ function App() {
       </div>
     );
   }
+
+  // Handler pentru salvarea preferințelor (local+cookie+supabase)
+  const handleSaveCookiePrefs = (prefs) => {
+    // Dacă user e logat -> salvezi și în Supabase, altfel doar browser.
+    saveCookiePrefs(prefs, user ? saveCookiePreferencesToAccount : undefined);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-zinc-800 text-white relative overflow-x-hidden">
@@ -170,29 +103,24 @@ function App() {
         userMenuRef={mobileUserRef}
       />
 
-      {showCurtains && (
-        <>
-          <motion.div
-            initial={{ left: 0 }}
-            animate={curtainsOpen ? { left: "-51%" } : { left: 0 }}
-            transition={{ duration: 0.8, ease: [0.7, 0, 0.3, 1] }}
-            className="fixed top-0 left-0 w-1/2 h-screen bg-gradient-to-br from-[#0d2230] via-[#08243c] to-[#0a1a25] z-[9999] pointer-events-none"
-            style={{ borderRight: "3px solid #00bcd4", boxShadow: "6px 0 24px 0 #0af6" }}
-          />
-          <motion.div
-            initial={{ right: 0 }}
-            animate={curtainsOpen ? { right: "-51%" } : { right: 0 }}
-            transition={{ duration: 0.8, ease: [0.7, 0, 0.3, 1] }}
-            className="fixed top-0 right-0 w-1/2 h-screen bg-gradient-to-bl from-[#0d2230] via-[#08243c] to-[#0a1a25] z-[9999] pointer-events-none"
-            style={{ borderLeft: "3px solid #00bcd4", boxShadow: "-6px 0 24px 0 #0af6" }}
-          />
-        </>
-      )}
+      {showCurtains && <CinemaCurtains active={curtainsOpen} />}
 
       <div className="pt-16" />
 
-      <CookieConsentBanner />
+      {/* Banner și MODAL GDPR, ambele primesc funcția centralizată de salvare */}
+      <CookieConsentBanner
+        onPreferencesOpen={() => setCookiePrefsOpen(true)}
+        saveToSupabase={user ? saveCookiePreferencesToAccount : undefined}
+        saveCookiePrefs={handleSaveCookiePrefs}
+      />
+      <CookiePreferencesModal
+        open={cookiePrefsOpen}
+        onClose={() => setCookiePrefsOpen(false)}
+        saveToSupabase={user ? saveCookiePreferencesToAccount : undefined}
+        saveCookiePrefs={handleSaveCookiePrefs}
+      />
 
+      {/* Fundal blur cinematic */}
       <div className="pointer-events-none fixed z-0 inset-0">
         <div className="absolute w-96 h-96 bg-cyan-400 opacity-20 blur-3xl rounded-full left-[-6rem] top-[-4rem]"></div>
         <div className="absolute w-72 h-72 bg-violet-500 opacity-10 blur-2xl rounded-full right-[-3rem] top-[60%]"></div>
@@ -216,9 +144,9 @@ function App() {
               <Route path="/films" element={<FilmsPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/cookies" element={<CookiesPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/edit-profile/:id" element={<EditProfilePage />} />
-              {/* Doar UNA dintre rutele /edit-profile (păstrează doar cu id dacă folosești id) */}
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/user/:id" element={<UserPage />} />
               <Route path="/subscription" element={<SubscriptionPage />} />

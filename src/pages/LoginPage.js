@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { supabase } from "../utils/supabaseClient"; // NEW
 
 // Input component ca la register
 function Input({ icon, ...props }) {
@@ -36,6 +37,29 @@ function LoginPage() {
     };
   }, []);
 
+  // --- SINCRONIZARE COOKIE PREFERENCES ---
+  async function syncCookiePreferences(userId) {
+    try {
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("cookie_preferences")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) {
+        console.warn("Cookie sync error:", error.message);
+        return;
+      }
+      if (data?.cookie_preferences) {
+        localStorage.setItem(
+          "cinemai_cookie_preferences",
+          JSON.stringify(data.cookie_preferences)
+        );
+      }
+    } catch (e) {
+      // fallback silent
+    }
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!emailOrUsername || !password) {
@@ -44,7 +68,12 @@ function LoginPage() {
     }
 
     try {
-      await login(emailOrUsername, password);
+      const user = await login(emailOrUsername, password);
+
+      // -- SINCRONIZARE COOKIE PREFERENCES DIN DB (dacă există user și coloană)
+      if (user && user.id) {
+        await syncCookiePreferences(user.id);
+      }
 
       // Optional: RememberMe logic pentru Supabase (doar dacă vrei strict tokenul să nu fie în localStorage)
       if (!rememberMe) {

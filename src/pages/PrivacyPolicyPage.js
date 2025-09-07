@@ -124,6 +124,17 @@ export default function PrivacyPolicyPage() {
       <p className="mt-12 text-xs text-zinc-400">
         By using CinemAI, you consent to the collection and use of your data as described in this Privacy Policy.
       </p>
+
+      {/* Buton centrat, cinematic, pentru cookies */}
+      <div className="mt-10 flex items-center justify-center">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("cookie-preference-change"))}
+          className="px-6 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-400 text-white font-semibold shadow-md transition"
+        >
+          Modifică preferințele de cookies
+        </button>
+      </div>
     </div>
   );
 }

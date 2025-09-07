@@ -7,7 +7,7 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null); // <-- NOU: sesiune!
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [needsGdpr, setNeedsGdpr] = useState(false);
   const [profiles, setProfiles] = useState([]);
@@ -38,7 +38,6 @@ export function UserProvider({ children }) {
   // 2. Upsert accounts și fetch profiles la user change
   useEffect(() => {
     if (!user?.id) {
-      // ATENȚIE: aici NU ștergem nimic din localStorage. Ștergem doar la logout explicit!
       setProfiles([]);
       setActiveProfile(null);
       console.log("[UserContext] User not found (pending or logout), clear state (not localStorage)");
@@ -76,7 +75,6 @@ export function UserProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
-    // ... logica sticky profile identică ...
     if (!user?.id && activeProfile) {
       setActiveProfile(null);
       setProfiles([]);
@@ -217,7 +215,25 @@ export function UserProvider({ children }) {
     setProfiles([]);
     setActiveProfile(null);
     localStorage.removeItem("activeProfileId");
+    localStorage.removeItem("cinemai_cookie_preferences"); // Șterge și preferințele la logout (opțional)
     console.log("[UserContext] logout: user, profiles, activeProfile cleared");
+  };
+
+  // 9. SAVE COOKIE PREFERENCES IN SUPABASE
+  const saveCookiePreferencesToAccount = async (preferences) => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        cookie_preferences: preferences,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (error) {
+      console.error("[UserContext] Eroare la salvarea cookie_preferences:", error);
+    } else {
+      console.log("[UserContext] cookie_preferences updated in Supabase:", preferences);
+    }
   };
 
   return (
@@ -225,7 +241,7 @@ export function UserProvider({ children }) {
       value={{
         user,
         setUser,
-        session,           // <-- NOU! Trebuie să fie inclus aici!
+        session,
         loading,
         login,
         register,
@@ -238,6 +254,7 @@ export function UserProvider({ children }) {
         deleteProfile: handleDeleteProfile,
         activeProfile,
         selectProfile,
+        saveCookiePreferencesToAccount, // <-- AICI!
       }}
     >
       {children}
